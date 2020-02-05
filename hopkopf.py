@@ -3,6 +3,11 @@ import random
 import string
 import copy
 
+def f(a):
+    for i in range(len(v)):
+        if a == v[i]:
+            return i
+    return -1
 u = list(range(1,11))
 v = string.ascii_lowercase[0:10]
 
@@ -33,9 +38,9 @@ M = [[0,0],
 #...
 
 #random initialisation
-for i in range(10):
-    for j in range(random.randint(1,4)):
-        rawgraph[i+1][random.randint(0,9)] = 1
+for i in range(1,11):
+    for j in range(random.randint(2,4)):
+        rawgraph[i][random.randint(0,9)] = 1
 
 for x in range(10):
     rawgraph[0][x+1] = v[x]
@@ -60,9 +65,16 @@ for k in range(1,11):
 print(M)
 graph = copy.deepcopy(rawgraph)
 freevertices = []
-for q in range(10):
-    if M[q][0] == 0:
-        freevertices.append([q+1,[]])
+for letter in range(10):
+    freevertices.append([v[letter],[]])
+i = 0
+while i < len(freevertices):
+    if f(M[i][1]) != -1:
         
-print(freevertices)
+    
+    
 
+
+
+
+            
