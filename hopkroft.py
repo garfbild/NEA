@@ -28,9 +28,9 @@ M = [[0,0],
      [0,0],
      [0,0]]
 #u    v
-#1    3
-#2    2
-#3    4
+#u1    v3
+#u2    v2
+#u3    v4
 #...
 
 #random initialisation
@@ -72,5 +72,30 @@ while i < len(freevertices):
     if freevertices[i] == "#":
         del freevertices[i]
     else:
+        freevertices[i] = "v{}".format(freevertices[i])
         i+=1
 print(freevertices)
+
+adjgraph = {}
+for u in range(1,11):
+    adjgraph["u{}".format(u)] = []
+    for v in range(1,11):
+        if graph[u][v] == 1:
+            adjgraph["u{}".format(u)].append("v{}".format(v))
+
+for v in range(1,11):
+    adjgraph["v{}".format(v)] = []
+    for u in range(1,11):
+        if graph[v][u] == 1:
+            adjgraph["v{}".format(v)].append("u{}".format(u))
+
+visited = []
+def DepthFirstSearch(visited,node,graph):
+    if node not in visited:
+        visited.append(node)
+        for n in graph[node]:
+            DepthFirstSearch(visited,n,graph)
+    return visited
+
+visited = DepthFirstSearch(visited,"u1",adjgraph)
+print(visited)
