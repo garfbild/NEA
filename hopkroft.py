@@ -11,7 +11,7 @@ rawgraph = np.zeros((11,11),dtype=object)
 #2-\  2
 #3  \-3
 
-# 1 2 3 
+# 1 2 3
 #1.
 #2  .
 #3    .
@@ -27,6 +27,7 @@ M = [[0,0],
      [0,0],
      [0,0],
      [0,0]]
+#u    v
 #1    3
 #2    2
 #3    4
@@ -57,7 +58,7 @@ for k in range(1,11):
                     #removing all connections between k and l nodes
                     graph[k][p] = 0
                     graph[p][l] = 0
-                break       
+                break
 print(M)
 graph = copy.deepcopy(rawgraph)
 freevertices = []
@@ -73,18 +74,3 @@ while i < len(freevertices):
     else:
         i+=1
 print(freevertices)
-connections = []
-for freevertex in freevertices:
-    connections.append(freevertex)
-    for x in range(1,11):
-        if graph[x][freevertex] == 1:
-            for y in range(1,11):
-                if graph[y][x] == 1:
-                    print(x,"connects to",y)
-            
-
-
-
-
-
-            
