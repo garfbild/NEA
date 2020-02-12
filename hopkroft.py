@@ -74,6 +74,9 @@ while i < len(freevertices):
     else:
         freevertices[i] = "v{}".format(freevertices[i])
         i+=1
+
+for m in M:
+    if m[1]
 print(freevertices)
 
 adjgraph = {}
