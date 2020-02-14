@@ -91,11 +91,22 @@ for v in range(1,11):
 
 visited = []
 def DepthFirstSearch(visited,node,graph):
+    if visited != []:
+        if visited[-1][0] == "u" and M[int(visited[-1][1])-1][1] == 0:
+            return visited
     if node not in visited:
         visited.append(node)
         for n in graph[node]:
-            DepthFirstSearch(visited,n,graph)
+            if node[0] == "u":
+                if int(n[1:]) == M[int(node[1])-1][1]:
+                    DepthFirstSearch(visited,n,graph)
+            else:
+                DepthFirstSearch(visited,n,graph)
     return visited
 
-visited = DepthFirstSearch(visited,"u1",adjgraph)
-print(visited)
+augmentingpath = DepthFirstSearch(visited,freevertices[0],adjgraph)
+for node in range(len(augmentingpath)):
+    if augmentingpath[node][0] == "u":
+        M[int(augmentingpath[node][1])-1][1] = int(augmentingpath[node-1][1:])
+
+print(M)
