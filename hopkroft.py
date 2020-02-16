@@ -67,6 +67,7 @@ for node in range(10):
 for m in M:
     if m[1] != 0:
         freevertices[m[1]-1] = "#"
+
 i = 0
 while i < len(freevertices):
     if freevertices[i] == "#":
