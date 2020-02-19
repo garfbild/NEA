@@ -4,7 +4,6 @@ import string
 import copy
 
 height,width = 10,10
-u = list(range(1,height+1))
 
 rawgraph = np.zeros((width+1,height+1),dtype=object)
 #1----1
@@ -17,8 +16,10 @@ rawgraph = np.zeros((width+1,height+1),dtype=object)
 #3    .
 
 
-M = [[0,0]]*width
-
+M = []
+for i in range(width):
+    M.append([0,0])
+print(M)
 #u    v
 #u1    v3
 #u2    v2
@@ -30,30 +31,23 @@ for i in range(1,width+1):
     for j in range(random.randint(3,4)):
         rawgraph[i][random.randint(1,width)] = 1
 
-for x in range(width):
-    rawgraph[0][x+1] = u[x]
-for y in range(height):
-    rawgraph[y+1][0] = u[y]
+for u in range(width):
+    rawgraph[0][u+1] = u+1
+for v in range(height):
+    rawgraph[v+1][0] = v+1
 graph = copy.deepcopy(rawgraph)
 print(graph)
 
-
-for k in range(1,height+1):
-    if M[k-1][0] == 0:# if no path exists for kth node then bredth first search
-        #breadth first search
-        M[k-1][0] = k
-        for l in range(1,width+1):
-            print(l)
-            if graph[k][l] == 1:
-                M[k-1][0] = graph[k][0]
-                M[k-1][1] = graph[0][l]
-                print(M)
-                for p in range(1,width+1):
-                    #removing all connections between k and l nodes
-                    graph[k][p] = 0
-                    graph[p][l] = 0
-
-print(M)
+for u in range(1,height+1):
+    M[u-1][0] = u
+    for v in range(1,width+1):
+        if graph[u][v] == 1:
+            M[u-1][1] = v
+            for p in range(1,width+1):
+                graph[u][p] = 0
+                graph[p][v] = 0
+            break
+#print(M)
 graph = copy.deepcopy(rawgraph)
 freevertices = []
 for node in range(width):
@@ -62,11 +56,6 @@ for m in M:
     if m[1] != 0:
         freevertices[m[1]-1] = "#"
 
-#for match in M:
-#    if graph[match[0]][match[1]] == 1:
-#        print("True")
-#    else:
-#        print(match)
 i = 0
 while i < len(freevertices):
     if freevertices[i] == "#":
@@ -92,7 +81,7 @@ for v in range(1,width+1):
             temp.append("u{}".format(u))
     adjgraph["v{}".format(v)] = temp
 
-print(adjgraph)
+#print(adjgraph)
 
 def DepthFirstSearch(visited,node,graph):
     if visited != []:
@@ -100,7 +89,7 @@ def DepthFirstSearch(visited,node,graph):
             return visited
     if node not in visited:
         visited.append(node)
-        print(node)
+        #print(node)
         for n in graph[node]:
             if node[0] == "u":
                 if int(n[1:]) == M[int(node[1])-1][1]:
@@ -117,13 +106,11 @@ for freevertex in freevertices:
         for node in range(len(augmentingpath)):
             if augmentingpath[node][0] == "u":
                 M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
-    #print("testing")
-    #for match in M:
-    #    if graph[match[0]][match[1]] == 1:
-    #        print("True")
-    #    else:
-    #        print(match)
-    print(M)
+    print("testing")
+    for match in M:
+        if graph[match[0]][match[1]] == 1:
+            print("True")
+        else:
+            print(match)
     print(freevertex,"augmentingpath",augmentingpath)
-print(graph)
 print(M)
