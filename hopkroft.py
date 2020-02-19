@@ -43,14 +43,16 @@ for k in range(1,height+1):
         #breadth first search
         M[k-1][0] = k
         for l in range(1,width+1):
+            print(l)
             if graph[k][l] == 1:
                 M[k-1][0] = graph[k][0]
                 M[k-1][1] = graph[0][l]
+                print(M)
                 for p in range(1,width+1):
                     #removing all connections between k and l nodes
                     graph[k][p] = 0
                     graph[p][l] = 0
-                break
+
 print(M)
 graph = copy.deepcopy(rawgraph)
 freevertices = []
@@ -60,11 +62,11 @@ for m in M:
     if m[1] != 0:
         freevertices[m[1]-1] = "#"
 
-for match in M:
-    if graph[match[0]][match[1]] == 1:
-        print("True")
-    else:
-        print(match)
+#for match in M:
+#    if graph[match[0]][match[1]] == 1:
+#        print("True")
+#    else:
+#        print(match)
 i = 0
 while i < len(freevertices):
     if freevertices[i] == "#":
@@ -115,12 +117,12 @@ for freevertex in freevertices:
         for node in range(len(augmentingpath)):
             if augmentingpath[node][0] == "u":
                 M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
-    print("testing")
-    for match in M:
-        if graph[match[0]][match[1]] == 1:
-            print("True")
-        else:
-            print(match)
+    #print("testing")
+    #for match in M:
+    #    if graph[match[0]][match[1]] == 1:
+    #        print("True")
+    #    else:
+    #        print(match)
     print(M)
     print(freevertex,"augmentingpath",augmentingpath)
 print(graph)
