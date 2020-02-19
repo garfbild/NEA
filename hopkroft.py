@@ -91,13 +91,12 @@ for v in range(1,11):
         if graph[v][u] == 1:
             adjgraph["v{}".format(v)].append("u{}".format(u))
 
-visited = []
 def DepthFirstSearch(visited,node,graph):
-    if visited != []:
-        if visited[-1][0] == "u" and M[int(visited[-1][1])-1][1] == 0:
-            print("insideDFS",M)
-            return visited
+    print(visited)
     if node not in visited:
+        if visited != []:
+            if visited[-1][0] == "u" and M[int(visited[-1][1:])-1][1] == 0:
+                return visited
         visited.append(node)
         for n in graph[node]:
             if node[0] == "u":
@@ -107,13 +106,13 @@ def DepthFirstSearch(visited,node,graph):
                 DepthFirstSearch(visited,n,graph)
     return visited
 
+
 for freevertex in freevertices:
     visited = []
     augmentingpath = DepthFirstSearch(visited,freevertex,adjgraph)
-    print("path",augmentingpath)
-    print("M",M)
     for node in range(len(augmentingpath)):
         if augmentingpath[node][0] == "u":
-            M[int(augmentingpath[node][1])-1][1] = int(augmentingpath[node-1][1:])
-
-    print("M",M)
+            M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
+    print(M)
+    print(augmentingpath)
+print(adjgraph)
