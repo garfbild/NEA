@@ -3,10 +3,10 @@ import random
 import string
 import copy
 
+height,width = 10,10
+u = list(range(1,height+1))
 
-u = list(range(1,11))
-
-rawgraph = np.zeros((11,11),dtype=object)
+rawgraph = np.zeros((width+1,height+1),dtype=object)
 #1----1
 #2-\  2
 #3  \-3
@@ -17,16 +17,8 @@ rawgraph = np.zeros((11,11),dtype=object)
 #3    .
 
 
-M = [[0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0],
-     [0,0]]
+M = [[0,0]]*width
+
 #u    v
 #u1    v3
 #u2    v2
@@ -34,27 +26,27 @@ M = [[0,0],
 #...
 
 #random initialisation
-for i in range(1,11):
-    for j in range(random.randint(2,4)):
-        rawgraph[i][random.randint(1,10)] = 1
+for i in range(1,width+1):
+    for j in range(random.randint(3,4)):
+        rawgraph[i][random.randint(1,width)] = 1
 
-for x in range(10):
+for x in range(width):
     rawgraph[0][x+1] = u[x]
-for y in range(10):
+for y in range(height):
     rawgraph[y+1][0] = u[y]
 graph = copy.deepcopy(rawgraph)
 print(graph)
 
 
-for k in range(1,11):
+for k in range(1,height+1):
     if M[k-1][0] == 0:# if no path exists for kth node then bredth first search
         #breadth first search
         M[k-1][0] = k
-        for l in range(1,11):
+        for l in range(1,width+1):
             if graph[k][l] == 1:
                 M[k-1][0] = graph[k][0]
                 M[k-1][1] = graph[0][l]
-                for p in range(1,11):
+                for p in range(1,width+1):
                     #removing all connections between k and l nodes
                     graph[k][p] = 0
                     graph[p][l] = 0
@@ -62,12 +54,17 @@ for k in range(1,11):
 print(M)
 graph = copy.deepcopy(rawgraph)
 freevertices = []
-for node in range(10):
+for node in range(width):
     freevertices.append(node+1)
 for m in M:
     if m[1] != 0:
         freevertices[m[1]-1] = "#"
 
+for match in M:
+    if graph[match[0]][match[1]] == 1:
+        print("True")
+    else:
+        print(match)
 i = 0
 while i < len(freevertices):
     if freevertices[i] == "#":
@@ -76,28 +73,32 @@ while i < len(freevertices):
         freevertices[i] = "v{}".format(freevertices[i])
         i+=1
 
-print(freevertices)
+print("freevertices",freevertices)
 
 adjgraph = {}
-for u in range(1,11):
-    adjgraph["u{}".format(u)] = []
-    for v in range(1,11):
+for u in range(1,height+1):
+    temp = []
+    for v in range(1,width+1):
         if graph[u][v] == 1:
-            adjgraph["u{}".format(u)].append("v{}".format(v))
+            temp.append("v{}".format(v))
+    adjgraph["u{}".format(u)] = temp
 
-for v in range(1,11):
-    adjgraph["v{}".format(v)] = []
-    for u in range(1,11):
-        if graph[v][u] == 1:
-            adjgraph["v{}".format(v)].append("u{}".format(u))
+for v in range(1,width+1):
+    temp = []
+    for u in range(1,height+1):
+        if graph[u][v] == 1:
+            temp.append("u{}".format(u))
+    adjgraph["v{}".format(v)] = temp
+
+print(adjgraph)
 
 def DepthFirstSearch(visited,node,graph):
-    print(visited)
+    if visited != []:
+        if visited[-1][0] == "u" and M[int(visited[-1][1:])-1][1] == 0:
+            return visited
     if node not in visited:
-        if visited != []:
-            if visited[-1][0] == "u" and M[int(visited[-1][1:])-1][1] == 0:
-                return visited
         visited.append(node)
+        print(node)
         for n in graph[node]:
             if node[0] == "u":
                 if int(n[1:]) == M[int(node[1])-1][1]:
@@ -110,9 +111,17 @@ def DepthFirstSearch(visited,node,graph):
 for freevertex in freevertices:
     visited = []
     augmentingpath = DepthFirstSearch(visited,freevertex,adjgraph)
-    for node in range(len(augmentingpath)):
-        if augmentingpath[node][0] == "u":
-            M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
+    if augmentingpath[-1][0] == "u" and M[int(augmentingpath[-1][1:])-1][1] == 0:
+        for node in range(len(augmentingpath)):
+            if augmentingpath[node][0] == "u":
+                M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
+    print("testing")
+    for match in M:
+        if graph[match[0]][match[1]] == 1:
+            print("True")
+        else:
+            print(match)
     print(M)
-    print(augmentingpath)
-print(adjgraph)
+    print(freevertex,"augmentingpath",augmentingpath)
+print(graph)
+print(M)
