@@ -65,6 +65,7 @@ while i < len(freevertices):
         i+=1
 
 print("freevertices",freevertices)
+print(M)
 
 adjgraph = {}
 for u in range(1,height+1):
@@ -103,8 +104,8 @@ for freevertex in freevertices:
     visited = []
     augmentingpath = DepthFirstSearch(visited,freevertex,adjgraph)
     if augmentingpath[-1][0] == "u" and M[int(augmentingpath[-1][1:])-1][1] == 0:
-        for node in range(len(augmentingpath)):
-            if augmentingpath[node][0] == "u":
+        for node in range(1,len(augmentingpath)):
+            if augmentingpath[node][0] == "u" and augmentingpath[node-1][0] == "v":
                 M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
     print("testing")
     for match in M:
@@ -113,4 +114,5 @@ for freevertex in freevertices:
         else:
             print(match)
     print(freevertex,"augmentingpath",augmentingpath)
-print(M)
+    print(M)
+print(adjgraph)
