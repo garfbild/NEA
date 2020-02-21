@@ -84,7 +84,6 @@ print(freevertices)
 print(M)
 
 def DepthFirstSearch(visited,node,graph):
-    print(node)
     if node not in visited:
         visited.append(node)
         #print(node)
@@ -93,16 +92,16 @@ def DepthFirstSearch(visited,node,graph):
                 if int(n[1:]) == M[int(node[1])-1][1]:
                     DepthFirstSearch(visited,n,graph)
             else:
+                print(n,node)
                 DepthFirstSearch(visited,n,graph)
     return visited
 
 #for each free vertex we find the augmenting path between two free vertices
-for freevertex in freevertices:
-    visited = []
-    augmentingpath = DepthFirstSearch(visited,freevertex,adjgraph)
-    print(augmentingpath)
-    if augmentingpath[-1][0] == "u" and M[int(augmentingpath[-1][1:])-1][1] == 0:
-        #symmetric difference between path and matching
-        for node in range(1,len(augmentingpath)):
-            if augmentingpath[node][0] == "u" and augmentingpath[node-1][0] == "v":
-                M[int(augmentingpath[node][1:])-1][1] = int(augmentingpath[node-1][1:])
+visited = []
+augmentingpath = DepthFirstSearch(visited,freevertices[0],adjgraph)
+print(augmentingpath)
+for i in range(len(augmentingpath)-1):
+    if augmentingpath[i] in adjgraph[augmentingpath[i+1]]:
+        print(augmentingpath[i],"->",augmentingpath[i+1])
+    else:
+        print(augmentingpath[i],"-/>",augmentingpath[i+1])
