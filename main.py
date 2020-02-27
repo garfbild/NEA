@@ -29,15 +29,13 @@ class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
         try:
-            self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"Day"))
-            self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"Periods"))
+            self.c.execute("DROP TABLE TimeblockTable")
+            self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
         except:
             pass
 
-    def add(self,day):
-        newID = self.getNewID()
-        name = "p"+str(newID)
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name,day))
+    def add(self,dayID,day,periods):
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(dayID,day,periods))
         self.conn.commit()
 
 
@@ -45,10 +43,12 @@ class Departments(Basic):
     #ID name
     def __init__(self):
         Basic.__init__(self,"Department")
+
     def add(self,name):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name))
         self.conn.commit()
+
     def getId(self,name):
         data = self.get()
         for x in range(len(data)):
@@ -73,8 +73,8 @@ class Rooms(Basic):
     def __init__(self):
         Basic.__init__(self,"Room")
         try:
-            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
-            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"Capacity"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"DepartmentId"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"Capacity"))
         except:
             pass
     def add(self,name,department,capacity):
@@ -87,8 +87,8 @@ class Teachers(Basic):
     def __init__(self):
         Basic.__init__(self,"Teacher")
         try:
-            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
-            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"CourseId"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"DepartmentId"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"CourseId"))
         except:
             pass
     def add(self,name,CourseId):
@@ -121,8 +121,8 @@ class System():
     def addRoom(self,name,DepartmentId,capacity):
         System.RoomObj.add(name,DepartmentId,capacity)
     @classmethod
-    def addTimeblocks(self,day):
-        System.TimeblockObj.add(day)
+    def addTimeblocks(self,dayID,day,periods):
+        System.TimeblockObj.add(dayID,day,periods)
 
 #GUI front end
 from tkinter import filedialog
@@ -235,8 +235,7 @@ class TimeblockGUI:
 
     def addTimeblocks(self):
         periods = self.p.get()
-        for i in range(int(periods)):
-            System.addTimeblocks(self.dict[self.comboBox.get()])
+        System.addTimeblocks(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
 
     def updateTree(self):
         donothing = True
