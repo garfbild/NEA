@@ -31,13 +31,14 @@ class Timeblocks(Basic):
         try:
             self.c.execute("DROP TABLE TimeblockTable")
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
+            for i in range(5):
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i,day,0))
         except:
             pass
 
     def add(self,dayID,day,periods):
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(dayID,day,periods))
         self.conn.commit()
-
 
 class Departments(Basic):
     #ID name
@@ -239,8 +240,6 @@ class TimeblockGUI:
 
     def updateTree(self):
         donothing = True
-
-
 
 def newFrame(newFrame):
     global currentFrame
