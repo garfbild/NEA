@@ -17,28 +17,27 @@ class Basic():
         self.c.execute('''SELECT {}Id FROM {}Table ORDER BY {}Id DESC;'''.format(self.objType,self.objType,self.objType))
         IDS = self.c.fetchall()
         if IDS == []:
-            newID = 1
+            return 1
         else:
-            newID = IDS[0][-1] + 1
-        return newID
+            return IDS[0][-1] + 1
 
     def close(self):
         self.conn.commit()
         self.conn.close()
 
-class Timeblocks:
+class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
         try:
-            self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"StartTime"))
-            self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"EndTime"))
             self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"Day"))
+            self.c.execute("ALTER TABLE {}Table add column {} INTEGER".format(self.objType,"Periods"))
         except:
-            print("column already initialised")
+            pass
 
-    def add(self,name,start,finish):
+    def add(self,day):
         newID = self.getNewID()
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name))
+        name = "p"+str(newID)
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name,day))
         self.conn.commit()
 
 
@@ -63,7 +62,7 @@ class Courses(Basic):
         try:
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
         except:
-            print("column already initialised")
+            pass
     def add(self,name,DepartmentId):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,DepartmentId))
@@ -77,7 +76,7 @@ class Rooms(Basic):
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"Capacity"))
         except:
-            print("column already initialised")
+            pass
     def add(self,name,department,capacity):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?)'''.format(self.objType),(newID,name,capacity,department))
@@ -91,7 +90,7 @@ class Teachers(Basic):
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"CourseId"))
         except:
-            print("column already initialised")
+            pass
     def add(self,name,CourseId):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,CourseId))
@@ -121,6 +120,9 @@ class System():
     @classmethod
     def addRoom(self,name,DepartmentId,capacity):
         System.RoomObj.add(name,DepartmentId,capacity)
+    @classmethod
+    def addTimeblocks(self,day):
+        System.TimeblockObj.add(day)
 
 #GUI front end
 from tkinter import filedialog
@@ -139,6 +141,7 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
+        tk.Button(self.frame, text="Timeblocks", command = lambda:newFrame(TimeblockGUI(root))).pack()
         self.e = tk.Entry(self.frame)
         self.e.pack()
         tk.Button(self.frame, text="add department", command = self.addDepartment).pack()
@@ -214,6 +217,32 @@ class RoomGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
 
+class TimeblockGUI:
+    def __init__(self,root):
+        self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
+        tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
+        tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
+        tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
+        self.dict = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5}
+
+        self.comboBox = ttk.Combobox(self.frame,
+                            values=["Monday","Tuesday","Wednesday","Thursday","Friday"])
+        self.comboBox.pack()
+        tk.Label(self.frame, textvariable="periods")
+        self.p = tk.Entry(self.frame)
+        self.p.pack()
+        tk.Button(self.frame, text="save", command = self.addTimeblocks).pack()
+
+    def addTimeblocks(self):
+        periods = self.p.get()
+        for i in range(int(periods)):
+            System.addTimeblocks(self.dict[self.comboBox.get()])
+
+    def updateTree(self):
+        donothing = True
+
+
+
 def newFrame(newFrame):
     global currentFrame
     if isinstance(newFrame,tk.Frame) == True:
@@ -224,22 +253,18 @@ def newFrame(newFrame):
         currentFrame.pack_forget()
         currentFrame = newFrame.frame
         newFrame.frame.pack()
-        newFrame.updateTree()
+        try:
+            newFrame.updateTree()
+        except:
+            pass
 
-def main():
-    global currentFrame
+if __name__ == "__main__":
     root = tk.Tk()
     root.geometry("1280x720")
     currentFrame = tk.Frame(root, width=1280, height=720, background="bisque")
     currentFrame.pack(fill=None, expand=False)
-    tk.Button(currentFrame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
-    tk.Button(currentFrame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
-    tk.Button(currentFrame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
-
     root.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("database files","*.db"),("all files","*.*")))
+    newFrame(DepartmentGUI(root))
     while True:
         root.update_idletasks()
         root.update()
-
-if __name__ == "__main__":
-    main()
