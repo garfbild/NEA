@@ -28,18 +28,16 @@ class Basic():
 class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
-        self.c.execute('''PRAGMA table_info(TimeblockTable)''')
-        days=["Monday","Tuesday","Wednesday","Thursday","Friday"]
-        if self.c.fetchall()[1][1] == "TimeblockName":
-            self.c.execute('''DROP TABLE TimeblockTable''')
+        try:
+            self.c.execute("DROP TABLE TimeblockTable")
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
             for i in range(5):
-                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,days[i],0))
-
-
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i,day,0))
+        except:
+            pass
 
     def add(self,dayID,day,periods):
-        self.c.execute('''UPDATE TimeblockTable SET Periods = {} WHERE TimeblockId = {}'''.format(periods,dayID))
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(dayID,day,periods))
         self.conn.commit()
 
 class Departments(Basic):
@@ -115,6 +113,12 @@ class System():
     def getRooms(self):
         return System.RoomObj.get()
     @classmethod
+    def getTimeblocks(self):
+        return System.TimeblockObj.get()
+    @classmethod
+    def getTeachers(self):
+        return System.TeacherObj.get()
+    @classmethod
     def addDepartment(self,name):
         System.DepartmentObj.add(name)
     @classmethod
@@ -124,8 +128,11 @@ class System():
     def addRoom(self,name,DepartmentId,capacity):
         System.RoomObj.add(name,DepartmentId,capacity)
     @classmethod
-    def addTimeblocks(self,dayID,day,periods):
+    def addTimeblock(self,dayID,day,periods):
         System.TimeblockObj.add(dayID,day,periods)
+    @classmethod
+    def addTeacher(self,teacherID,name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday):
+        System.TimeblockObj.add(dayID,day,periods,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday)
 
 #GUI front end
 from tkinter import filedialog
@@ -145,6 +152,8 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
         tk.Button(self.frame, text="Timeblocks", command = lambda:newFrame(TimeblockGUI(root))).pack()
+        tk.Button(self.frame, text="Teachers", command = lambda:newFrame(TeacherGUI(root))).pack()
+
         self.e = tk.Entry(self.frame)
         self.e.pack()
         tk.Button(self.frame, text="add department", command = self.addDepartment).pack()
@@ -242,6 +251,59 @@ class TimeblockGUI:
 
     def updateTree(self):
         donothing = True
+
+class TeacherGUI:
+    def __init__(self,root):
+        self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
+        self.tree = ttk.Treeview(self.frame,columns=('Name','Department','Course','TeachesMonday','TeachesTuesday','TeachesWednesday','TeachesThursday','TeachesFriday'))
+        self.tree.heading('#0', text='Id')
+        self.tree.heading('#1', text='Name')
+        self.tree.heading('#2', text='Department')
+        self.tree.heading('#3', text='Course')
+        self.tree.heading('#4', text='TeachesMonday')
+        self.tree.heading('#5', text='TeachesTuesday')
+        self.tree.heading('#6', text='TeachesWednesday')
+        self.tree.heading('#7', text='TeachesThursday')
+        self.tree.heading('#8', text='TeachesFriday')
+
+        self.tree.pack()
+        tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
+        tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
+        tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
+
+        self.n = tk.Entry(self.frame)
+        self.n.pack()
+
+        self.DepartmentBox = ttk.Combobox(self.frame,
+                            values=[data[1] for data in System.getDepartments()])
+        self.DepartmentBox.pack()
+        self.CourseBox = ttk.Combobox(self.frame,
+                            values=[data[1] for data in System.getCourses()])
+        self.CourseBox.pack()
+
+        self.Monday = tk.IntVar()
+        self.Tuesday = tk.IntVar()
+        self.Wednesday = tk.IntVar()
+        self.Thursday = tk.IntVar()
+        self.Friday = tk.IntVar()
+
+        tk.Checkbutton(self.frame, text="Monday", variable=self.Monday).pack()
+        tk.Checkbutton(self.frame, text="Tuesday", variable=self.Tuesday).pack()
+        tk.Checkbutton(self.frame, text="Wednesday", variable=self.Wednesday).pack()
+        tk.Checkbutton(self.frame, text="Thursday", variable=self.Thursday).pack()
+        tk.Checkbutton(self.frame, text="Friday", variable=self.Friday).pack()
+
+        tk.Button(self.frame, text="add teacher", command = self.addTeacher).pack()
+
+    def addTeacher(self):
+        System.addRoom(self.n.get(),System.DepartmentObj.getId(self.comboBox.get()),self.c.get())
+        self.updateTree()
+
+    def updateTree(self):
+        self.tree.delete(*self.tree.get_children())
+        Data = System.getRooms()
+        for i in range(len(Data)-1,-1,-1):
+            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
 
 def newFrame(newFrame):
     global currentFrame
