@@ -28,16 +28,18 @@ class Basic():
 class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
-        try:
-            self.c.execute("DROP TABLE TimeblockTable")
+        self.c.execute('''PRAGMA table_info(TimeblockTable)''')
+        days=["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        if self.c.fetchall()[1][1] == "TimeblockName":
+            self.c.execute('''DROP TABLE TimeblockTable''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
             for i in range(5):
-                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i,day,0))
-        except:
-            pass
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,days[i],0))
+
+
 
     def add(self,dayID,day,periods):
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(dayID,day,periods))
+        self.c.execute('''UPDATE TimeblockTable SET Periods = {} WHERE TimeblockId = {}'''.format(periods,dayID))
         self.conn.commit()
 
 class Departments(Basic):
