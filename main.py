@@ -51,7 +51,7 @@ class Departments(Basic):
         data = self.get()
         for x in range(len(data)):
             if data[x][1] == name:
-                return x+1
+                return data[x][0]
 
 class Courses(Basic):
     #ID name DepartmentId
@@ -65,6 +65,11 @@ class Courses(Basic):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,DepartmentId))
         self.conn.commit()
+    def getId(self,name):
+        data = self.get()
+        for x in range(len(data)):
+            if data[x][1] == name:
+                return data[x][0]
 
 class Rooms(Basic):
     #ID name DepartmentId Capacity
@@ -77,7 +82,7 @@ class Rooms(Basic):
             pass
     def add(self,name,department,capacity):
         newID = self.getNewID()
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?)'''.format(self.objType),(newID,name,capacity,department))
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?)'''.format(self.objType),(newID,name,department,capacity))
         self.conn.commit()
 
 class Teachers(Basic):
@@ -110,7 +115,7 @@ class Students(Basic):
             pass
     def add(self,name,CourseOne,CourseTwo,CourseThree):
         newID = self.getNewID()
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,CourseOne,CourseTwo,CourseThree))
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?,?)'''.format(self.objType),(newID,name,CourseOne,CourseTwo,CourseThree))
         self.conn.commit()
 
 
@@ -120,13 +125,19 @@ class System():
     CourseObj = Courses()
     RoomObj = Rooms()
     TeacherObj = Teachers()
-    StudentObj - Students()
+    StudentObj = Students()
     @classmethod
     def getDepartments(self):
         return System.DepartmentObj.get()
     @classmethod
+    def getDepartmentId(self,name):
+        return System.DepartmentObj.getId(name)
+    @classmethod
     def getCourses(self):
         return System.CourseObj.get()
+    @classmethod
+    def getCourseId(self,name):
+        return System.CourseObj.getId(name)
     @classmethod
     def getRooms(self):
         return System.RoomObj.get()
@@ -177,6 +188,8 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
         tk.Button(self.frame, text="Timeblocks", command = lambda:newFrame(TimeblockGUI(root))).pack()
         tk.Button(self.frame, text="Teachers", command = lambda:newFrame(TeacherGUI(root))).pack()
+        tk.Button(self.frame, text="Students", command = lambda:newFrame(StudentGUI(root))).pack()
+
 
         self.e = tk.Entry(self.frame)
         self.e.pack()
@@ -244,7 +257,7 @@ class RoomGUI:
         tk.Button(self.frame, text="add room", command = self.addRoom).pack()
 
     def addRoom(self):
-        System.addRoom(self.n.get(),System.DepartmentObj.getId(self.comboBox.get()),self.c.get())
+        System.addRoom(self.n.get(),System.getDepartmentId(self.comboBox.get()),self.c.get())
         self.updateTree()
 
     def updateTree(self):
@@ -289,7 +302,6 @@ class TeacherGUI:
         self.tree.heading('#6', text='TeachesWednesday')
         self.tree.heading('#7', text='TeachesThursday')
         self.tree.heading('#8', text='TeachesFriday')
-
         self.tree.pack()
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
@@ -320,7 +332,7 @@ class TeacherGUI:
         tk.Button(self.frame, text="add teacher", command = self.addTeacher).pack()
 
     def addTeacher(self):
-        System.addTeacher(self.n.get(),self.DepartmentBox.get(),self.CourseBox.get(),self.Monday.get(),self.Tuesday.get(),self.Wednesday.get(),self.Thursday.get(),self.Friday.get())
+        System.addTeacher(self.n.get(),System.getDepartmentId(self.DepartmentBox.get()),System.getCourseId(self.CourseBox.get()),self.Monday.get(),self.Tuesday.get(),self.Wednesday.get(),self.Thursday.get(),self.Friday.get())
         self.updateTree()
 
     def updateTree(self):
@@ -332,25 +344,44 @@ class TeacherGUI:
 class StudentGUI:
     def __init__(self,root):
         self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
+        self.tree = ttk.Treeview(self.frame,columns=('Name','CourseOne','CourseTwo','CourseThree'))
+        self.tree.heading('#0', text='Id')
+        self.tree.heading('#1', text='Name')
+        self.tree.heading('#2', text='CourseOne')
+        self.tree.heading('#3', text='CourseTwo')
+        self.tree.heading('#4', text='CourseThree')
+        self.tree.pack()
+
+
+
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
-        self.dict = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5}
 
-        self.comboBox = ttk.Combobox(self.frame,
-                            values=["Monday","Tuesday","Wednesday","Thursday","Friday"])
-        self.comboBox.pack()
-        tk.Label(self.frame, textvariable="periods")
-        self.p = tk.Entry(self.frame)
-        self.p.pack()
-        tk.Button(self.frame, text="save", command = self.addTimeblocks).pack()
+        self.n = tk.Entry(self.frame)
+        self.n.pack()
 
-    def addTimeblocks(self):
-        periods = self.p.get()
-        System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
+        self.CourseBoxOne = ttk.Combobox(self.frame,
+                            values=[data[1] for data in System.getCourses()])
+        self.CourseBoxOne.pack()
+        self.CourseBoxTwo = ttk.Combobox(self.frame,
+                            values=[data[1] for data in System.getCourses()])
+        self.CourseBoxTwo.pack()
+        self.CourseBoxThree = ttk.Combobox(self.frame,
+                            values=[data[1] for data in System.getCourses()])
+        self.CourseBoxThree.pack()
+
+        tk.Button(self.frame, text="add student", command = self.addStudents).pack()
+
+    def addStudents(self):
+        System.addStudent(self.n.get(),System.getCourseId(self.CourseBoxOne.get()),System.getCourseId(self.CourseBoxTwo.get()),System.getCourseId(self.CourseBoxThree.get()))
 
     def updateTree(self):
-        donothing = True
+        self.tree.delete(*self.tree.get_children())
+        Data = System.getStudents()
+        for i in range(len(Data)-1,-1,-1):
+            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4]))
+
 def newFrame(newFrame):
     global currentFrame
     if isinstance(newFrame,tk.Frame) == True:
