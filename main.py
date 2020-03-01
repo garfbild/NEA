@@ -28,28 +28,25 @@ class Basic():
 class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
-        try:
-            self.c.execute("DROP TABLE TimeblockTable")
+        self.c.execute('''PRAGMA table_info(TimeblockTable)''')
+        days=["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        if self.c.fetchall()[1][1] == "TimeblockName":
+            self.c.execute('''DROP TABLE TimeblockTable''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
             for i in range(5):
-                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i,day,0))
-        except:
-            pass
-
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,days[i],0))
     def add(self,dayID,day,periods):
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(dayID,day,periods))
+        self.c.execute('''UPDATE TimeblockTable SET Periods = {} WHERE TimeblockId = {}'''.format(periods,dayID))
         self.conn.commit()
 
 class Departments(Basic):
     #ID name
     def __init__(self):
         Basic.__init__(self,"Department")
-
     def add(self,name):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name))
         self.conn.commit()
-
     def getId(self,name):
         data = self.get()
         for x in range(len(data)):
@@ -90,12 +87,32 @@ class Teachers(Basic):
         try:
             self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"DepartmentId"))
             self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"CourseId"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"TeachesMonday"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"TeachesTuesday"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"TeachesWednesday"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"TeachesThursday"))
+            self.c.execute("ALTER TABLE {}Table ADD COLUMN {}".format(self.objType,"TeachesFriday"))
         except:
             pass
-    def add(self,name,CourseId):
+    def add(self,name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday):
         newID = self.getNewID()
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,CourseId))
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?,?,?,?,?,?)'''.format(self.objType),(newID,name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday))
         self.conn.commit()
+
+class Students(Basic):
+    def __init__(self):
+        Basic.__init__(self,"Student")
+        try:
+            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"CourseOne"))
+            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"CourseTwo"))
+            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"CourseThree"))
+        except:
+            pass
+    def add(self,name,CourseOne,CourseTwo,CourseThree):
+        newID = self.getNewID()
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,CourseOne,CourseTwo,CourseThree))
+        self.conn.commit()
+
 
 class System():
     TimeblockObj = Timeblocks()
@@ -103,6 +120,7 @@ class System():
     CourseObj = Courses()
     RoomObj = Rooms()
     TeacherObj = Teachers()
+    StudentObj - Students()
     @classmethod
     def getDepartments(self):
         return System.DepartmentObj.get()
@@ -119,6 +137,9 @@ class System():
     def getTeachers(self):
         return System.TeacherObj.get()
     @classmethod
+    def getStudents(self):
+        return System.StudentObj.get()
+    @classmethod
     def addDepartment(self,name):
         System.DepartmentObj.add(name)
     @classmethod
@@ -131,8 +152,11 @@ class System():
     def addTimeblock(self,dayID,day,periods):
         System.TimeblockObj.add(dayID,day,periods)
     @classmethod
-    def addTeacher(self,teacherID,name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday):
-        System.TimeblockObj.add(dayID,day,periods,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday)
+    def addTeacher(self,name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday):
+        System.TeacherObj.add(name,department,course,TeachesMonday,TeachesTuesday,TeachesWednesday,TeachesThursday,TeachesFriday)
+    @classmethod
+    def addStudent(self,name,CourseOne,CourseTwo,CourseThree):
+        System.StudentObj.add(name,CourseOne,CourseTwo,CourseThree)
 
 #GUI front end
 from tkinter import filedialog
@@ -247,7 +271,7 @@ class TimeblockGUI:
 
     def addTimeblocks(self):
         periods = self.p.get()
-        System.addTimeblocks(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
+        System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
 
     def updateTree(self):
         donothing = True
@@ -296,15 +320,37 @@ class TeacherGUI:
         tk.Button(self.frame, text="add teacher", command = self.addTeacher).pack()
 
     def addTeacher(self):
-        System.addRoom(self.n.get(),System.DepartmentObj.getId(self.comboBox.get()),self.c.get())
+        System.addTeacher(self.n.get(),self.DepartmentBox.get(),self.CourseBox.get(),self.Monday.get(),self.Tuesday.get(),self.Wednesday.get(),self.Thursday.get(),self.Friday.get())
         self.updateTree()
 
     def updateTree(self):
         self.tree.delete(*self.tree.get_children())
-        Data = System.getRooms()
+        Data = System.getTeachers()
         for i in range(len(Data)-1,-1,-1):
-            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
+            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4],Data[i][5],Data[i][6],Data[i][7],Data[i][8]))
 
+class StudentGUI:
+    def __init__(self,root):
+        self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
+        tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
+        tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
+        tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
+        self.dict = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5}
+
+        self.comboBox = ttk.Combobox(self.frame,
+                            values=["Monday","Tuesday","Wednesday","Thursday","Friday"])
+        self.comboBox.pack()
+        tk.Label(self.frame, textvariable="periods")
+        self.p = tk.Entry(self.frame)
+        self.p.pack()
+        tk.Button(self.frame, text="save", command = self.addTimeblocks).pack()
+
+    def addTimeblocks(self):
+        periods = self.p.get()
+        System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
+
+    def updateTree(self):
+        donothing = True
 def newFrame(newFrame):
     global currentFrame
     if isinstance(newFrame,tk.Frame) == True:
