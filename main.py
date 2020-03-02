@@ -168,6 +168,11 @@ class System():
     @classmethod
     def addStudent(self,name,CourseOne,CourseTwo,CourseThree):
         System.StudentObj.add(name,CourseOne,CourseTwo,CourseThree)
+    @classmethod
+    def HopfcroftKarp(self):
+        data = System.StudentObj.get()
+        for datum in data:
+            print(datum)
 
 #GUI front end
 from tkinter import filedialog
@@ -189,6 +194,8 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Timeblocks", command = lambda:newFrame(TimeblockGUI(root))).pack()
         tk.Button(self.frame, text="Teachers", command = lambda:newFrame(TeacherGUI(root))).pack()
         tk.Button(self.frame, text="Students", command = lambda:newFrame(StudentGUI(root))).pack()
+        tk.Button(self.frame, text="Create Timetable", command = lambda:newFrame(HopfcroftKarpGUI(root))).pack()
+
 
 
         self.e = tk.Entry(self.frame)
@@ -287,7 +294,7 @@ class TimeblockGUI:
         System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
 
     def updateTree(self):
-        donothing = True
+        pass
 
 class TeacherGUI:
     def __init__(self,root):
@@ -375,12 +382,21 @@ class StudentGUI:
 
     def addStudents(self):
         System.addStudent(self.n.get(),System.getCourseId(self.CourseBoxOne.get()),System.getCourseId(self.CourseBoxTwo.get()),System.getCourseId(self.CourseBoxThree.get()))
-
+        self.updateTree()
+        
     def updateTree(self):
         self.tree.delete(*self.tree.get_children())
         Data = System.getStudents()
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4]))
+
+class HopfcroftKarpGUI:
+    def __init__(self,root):
+        self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
+        tk.Button(self.frame, text="create timetable", command = System.HopfcroftKarp).pack()
+
+    def updateTree(self):
+        pass
 
 def newFrame(newFrame):
     global currentFrame
