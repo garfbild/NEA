@@ -1,4 +1,7 @@
 import sqlite3
+import random
+import string
+import copy
 global currentFrame
 
 
@@ -8,11 +11,9 @@ class Basic():
         self.conn = sqlite3.connect('data.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS {}Table({}Id INTEGER PRIMARY KEY, {}Name TEXT)'''.format(self.objType,self.objType,self.objType))
-
     def get(self):
-        self.c.execute('''SELECT * FROM {}Table'''.format(self.objType,self.objType))
+        self.c.execute('''SELECT * FROM {}Table'''.format(self.objType))
         return self.c.fetchall()
-
     def getNewID(self):
         self.c.execute('''SELECT {}Id FROM {}Table ORDER BY {}Id DESC;'''.format(self.objType,self.objType,self.objType))
         IDS = self.c.fetchall()
@@ -58,12 +59,13 @@ class Courses(Basic):
     def __init__(self):
         Basic.__init__(self,"Course")
         try:
+            self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"TimeRequirement"))
             self.c.execute("ALTER TABLE {}Table add column {}".format(self.objType,"DepartmentId"))
         except:
             pass
-    def add(self,name,DepartmentId):
+    def add(self,name,DepartmentId,time):
         newID = self.getNewID()
-        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(newID,name,DepartmentId))
+        self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?)'''.format(self.objType),(newID,name,DepartmentId,time))
         self.conn.commit()
     def getId(self,name):
         data = self.get()
@@ -118,7 +120,6 @@ class Students(Basic):
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?,?)'''.format(self.objType),(newID,name,CourseOne,CourseTwo,CourseThree))
         self.conn.commit()
 
-
 class System():
     TimeblockObj = Timeblocks()
     DepartmentObj = Departments()
@@ -154,8 +155,8 @@ class System():
     def addDepartment(self,name):
         System.DepartmentObj.add(name)
     @classmethod
-    def addCourse(self,name,DepartmentId):
-        System.CourseObj.add(name,DepartmentId)
+    def addCourse(self,name,DepartmentId,time):
+        System.CourseObj.add(name,DepartmentId,time)
     @classmethod
     def addRoom(self,name,DepartmentId,capacity):
         System.RoomObj.add(name,DepartmentId,capacity)
@@ -169,10 +170,202 @@ class System():
     def addStudent(self,name,CourseOne,CourseTwo,CourseThree):
         System.StudentObj.add(name,CourseOne,CourseTwo,CourseThree)
     @classmethod
-    def HopfcroftKarp(self):
-        data = System.StudentObj.get()
-        for datum in data:
-            print(datum)
+    def Two(self,x):
+        if len(str(x)) == 1:
+            bit = "0"+str(x)
+        elif len(str(x)) == 2:
+            bit = str(x)
+        else:
+            panic = True
+        return bit
+    @classmethod
+    def MakeTimetable(self):
+        # first course, second course, third course, course, nth class
+        # student classes
+        sdata = System.getStudents()
+        cdata = System.getCourses()
+        dictionary = {}
+        for datum in sdata:
+            Key=""
+            for i in sorted(datum[2:]):
+                Key = Key+System.Two(i)
+                
+            try:
+                dictionary[Key].append(datum[0])
+            except:
+                dictionary[Key] = []
+                dictionary[Key].append(datum[0])
+        classes = []
+        for Key in dictionary:
+            classsize = len(dictionary[Key])
+            for i in range(0,5,2):
+                x = cdata[int(Key[i:i+2])-1]
+                a = System.Two(x[0])
+                b = x[3]
+                for c in range(b):
+                    classes.append(Key+a+System.Two(c+1))
+        # teacher id ,day, period
+        # teacher time block
+        sessions = []
+        tdata = System.getTeachers()
+        ttdata = System.getTimeblocks()
+        print(tdata)
+        print(ttdata)
+        for teacher in tdata:
+            Key = ""
+            Key = Key+System.Two(teacher[0])
+            for day in range(5):
+                if teacher[4:][day] == 1:
+                    Key = Key + System.Two(day+1)
+                    for period in range(ttdata[day][2]):
+                        print(System.Two(period))
+        
+        HopfcroftKarp()
+
+
+        
+import random
+import string
+import copy
+global path
+
+
+#depth first search.
+def DepthFirstSearch(visited,node,graph,M):
+    #we pass the path as we back up through the recursion
+    global path
+    if visited != []:
+        if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
+            path.append(node)
+            return visited
+    if node not in visited:
+        visited.append(node)
+        for n in graph[node]:
+            if visited != []:
+                if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
+                    path.append(node)
+                    return visited
+            if node[0] == "u":
+                if int(n[1:]) == M[int(node[1])-1]:
+                    visited = DepthFirstSearch(visited,n,graph,M)
+            else:
+                visited = DepthFirstSearch(visited,n,graph,M)
+    if visited != []:
+        if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
+            path.append(node)
+            return visited
+
+    return visited
+
+def HopfcroftKarp():
+    rawgraph = []
+
+    height,width = 10,10
+    for x in range(width+1):
+        rawgraph.append([])
+        for y in range(height+1):
+            rawgraph[x].append(0)
+        
+    #1----1
+    #2-\  2
+    #3  \-3
+
+    # 1 2 3
+    #1.
+    #2  .
+    #3    .
+
+
+    M = []
+    for i in range(width):
+        M.append(0)
+    #u    v
+    #u1    v3
+    #u2    v2
+    #u3    v4
+    #...
+
+    #random initialisation
+    for i in range(1,width+1):
+        for j in range(random.randint(3,4)):
+            rawgraph[i][random.randint(1,width)] = 1
+
+    #adding labels around the edge
+    for u in range(width):
+        rawgraph[0][u+1] = u+1
+    for v in range(height):
+        rawgraph[v+1][0] = v+1
+    graph = copy.deepcopy(rawgraph)
+
+
+    #bfs to get initial matching
+    for u in range(1,height+1):
+        for v in range(1,width+1):
+            if graph[u][v] == 1:
+                M[u-1] = v
+                for p in range(1,width+1):
+                    graph[u][p] = 0
+                    graph[p][v] = 0
+                break
+
+    #finding free freevertices
+    graph = copy.deepcopy(rawgraph)
+    freevertices = []
+    for node in range(width):
+        freevertices.append(node+1)
+    for m in M:
+        if m != 0:
+            freevertices[m-1] = "#"
+
+    i = 0
+    while i < len(freevertices):
+        if freevertices[i] == "#":
+            del freevertices[i]
+        else:
+            freevertices[i] = "v{}".format(freevertices[i])
+            i+=1
+
+    #converting adjacency matrix into adjacency list
+    adjgraph = {}
+    for u in range(1,height+1):
+        temp = []
+        for v in range(1,width+1):
+            if graph[u][v] == 1:
+                temp.append("v{}".format(v))
+        adjgraph["u{}".format(u)] = temp
+
+    for v in range(1,width+1):
+        temp = []
+        for u in range(1,height+1):
+            if graph[u][v] == 1:
+                temp.append("u{}".format(u))
+        adjgraph["v{}".format(v)] = temp
+
+    global path
+    visited = []
+    path = []
+
+    print(freevertices)
+    for freevertex in freevertices:
+        path = []
+        DepthFirstSearch(visited,freevertex,adjgraph,M)
+        path.reverse()
+        print(path)
+        if path != []:
+            if M[int(path[-1][1:])-1] == 0:
+                #symmetric difference of a path and matching
+                for x in range(len(path)):
+                    if path[x][0] == "u":
+                        M[int(path[x][1:])-1] = int(path[x-1][1:])
+            else:
+                print(freevertex,"has no augmentingpath")
+        else:
+            print(freevertex,"has no augmentingpath")
+
+    print(M)
+    
+    
+    
 
 #GUI front end
 from tkinter import filedialog
@@ -194,7 +387,8 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Timeblocks", command = lambda:newFrame(TimeblockGUI(root))).pack()
         tk.Button(self.frame, text="Teachers", command = lambda:newFrame(TeacherGUI(root))).pack()
         tk.Button(self.frame, text="Students", command = lambda:newFrame(StudentGUI(root))).pack()
-        tk.Button(self.frame, text="Create Timetable", command = lambda:newFrame(HopfcroftKarpGUI(root))).pack()
+        tk.Button(self.frame, text="Create Timetable", command = lambda:newFrame(TimetableGUI(root))).pack()
+        tk.Button(self.frame, text="create timetable", command = System.MakeTimetable).pack()
 
 
 
@@ -215,10 +409,11 @@ class DepartmentGUI:
 class CourseGUI:
     def __init__(self,root):
         self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
-        self.tree = ttk.Treeview(self.frame,columns=('Name','Department'))
+        self.tree = ttk.Treeview(self.frame,columns=('Name','Department','TimeRequirement'))
         self.tree.heading('#0', text='Id')
         self.tree.heading('#1', text='Name')
         self.tree.heading('#2', text='Department')
+        self.tree.heading('#3', text='TimeRequirement')
         self.tree.pack()
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
@@ -228,22 +423,25 @@ class CourseGUI:
         self.comboBox = ttk.Combobox(self.frame,
                             values=[data[1] for data in System.getDepartments()])
         self.comboBox.pack()
+        self.t = tk.Entry(self.frame)
+        self.t.pack()
         tk.Button(self.frame, text="add course", command = self.addCourse).pack()
+        
 
     def addCourse(self):
-        System.addCourse(self.e.get(),System.DepartmentObj.getId(self.comboBox.get()))
+        System.addCourse(self.e.get(),System.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
         self.updateTree()
 
     def updateTree(self):
         self.tree.delete(*self.tree.get_children())
         Data = System.getCourses()
         for i in range(len(Data)-1,-1,-1):
-            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2]))
+            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
 
 class RoomGUI:
     def __init__(self,root):
         self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
-        self.tree = ttk.Treeview(self.frame,columns=('Name','Capacity','Department'))
+        self.tree = ttk.Treeview(self.frame,columns=('Name','Department','Capacity'))
         self.tree.heading('#0', text='Id')
         self.tree.heading('#1', text='Name')
         self.tree.heading('#2', text='Department')
@@ -256,11 +454,12 @@ class RoomGUI:
 
         self.n = tk.Entry(self.frame)
         self.n.pack()
-        self.c = tk.Entry(self.frame)
-        self.c.pack()
         self.comboBox = ttk.Combobox(self.frame,
                             values=[data[1] for data in System.getDepartments()])
         self.comboBox.pack()
+        self.c = tk.Entry(self.frame)
+        self.c.pack()
+        
         tk.Button(self.frame, text="add room", command = self.addRoom).pack()
 
     def addRoom(self):
@@ -292,6 +491,7 @@ class TimeblockGUI:
     def addTimeblocks(self):
         periods = self.p.get()
         System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
+        print(System.getTimeblocks())
 
     def updateTree(self):
         pass
@@ -390,10 +590,10 @@ class StudentGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4]))
 
-class HopfcroftKarpGUI:
+class TimetableGUI:
     def __init__(self,root):
         self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
-        tk.Button(self.frame, text="create timetable", command = System.HopfcroftKarp).pack()
+        tk.Button(self.frame, text="create timetable", command = System.MakeTimetable).pack()
 
     def updateTree(self):
         pass
