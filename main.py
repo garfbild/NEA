@@ -29,16 +29,21 @@ class Basic():
 class Timeblocks(Basic):
     def __init__(self):
         Basic.__init__(self,"Timeblock")
+        self.days = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
         self.c.execute('''PRAGMA table_info(TimeblockTable)''')
-        days=["Monday","Tuesday","Wednesday","Thursday","Friday"]
         if self.c.fetchall()[1][1] == "TimeblockName":
             self.c.execute('''DROP TABLE TimeblockTable''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
-            for i in range(5):
-                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,days[i],0))
+            
     def add(self,dayID,day,periods):
+        try:
+            for i in range(5):
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,self.days[i],0))
+        except:
+            pass
         self.c.execute('''UPDATE TimeblockTable SET Periods = {} WHERE TimeblockId = {}'''.format(periods,dayID))
         self.conn.commit()
+            
 
 class Departments(Basic):
     #ID name
@@ -120,7 +125,7 @@ class Students(Basic):
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?,?)'''.format(self.objType),(newID,name,CourseOne,CourseTwo,CourseThree))
         self.conn.commit()
 
-class System():
+class System(Basic):
     TimeblockObj = Timeblocks()
     DepartmentObj = Departments()
     CourseObj = Courses()
@@ -180,7 +185,7 @@ class System():
         return bit
     @classmethod
     def MakeTimetable(self):
-        # first course, second course, third course, course, nth class
+        # first course, second course, third course,course id, nth class
         # student classes
         sdata = System.getStudents()
         cdata = System.getCourses()
@@ -204,26 +209,35 @@ class System():
                 b = x[3]
                 for c in range(b):
                     classes.append(Key+a+System.Two(c+1))
+        print(classes)
         # teacher id ,day, period
         # teacher time block
         sessions = []
         tdata = System.getTeachers()
         ttdata = System.getTimeblocks()
-        print(tdata)
-        print(ttdata)
         for teacher in tdata:
             Key = ""
             Key = Key+System.Two(teacher[0])
             for day in range(5):
                 if teacher[4:][day] == 1:
-                    Key = Key + System.Two(day+1)
                     for period in range(ttdata[day][2]):
-                        print(System.Two(period))
-        
-        HopfcroftKarp()
+                        sessions.append(Key+System.Two(day+1)+System.Two(period+1))
+        print(sessions)
+        graph = []
+        for x in range(len(classes)):
+            graph.append([])
+            for y in range(len(sessions)):
+                graph[x].append(0)
 
+        for c in range(len(classes)):
+            for t in range(len(sessions)):
+                # if techer course == class course
+                if tdata[int(sessions[t][:2])-1][3] == int(classes[c][6:8]):
+                    graph[c][t] = 1
+                    
+        [print(row) for row in graph]
+        HopfcroftKarp(graph)
 
-        
 import random
 import string
 import copy
@@ -257,14 +271,10 @@ def DepthFirstSearch(visited,node,graph,M):
 
     return visited
 
-def HopfcroftKarp():
-    rawgraph = []
+def HopfcroftKarp(graph):
+    rawgraph = copy.deepcopy(graph)
 
-    height,width = 10,10
-    for x in range(width+1):
-        rawgraph.append([])
-        for y in range(height+1):
-            rawgraph[x].append(0)
+    height,width = len(rawgraph),len(rawgraph[0])
         
     #1----1
     #2-\  2
@@ -275,7 +285,6 @@ def HopfcroftKarp():
     #2  .
     #3    .
 
-
     M = []
     for i in range(width):
         M.append(0)
@@ -285,29 +294,18 @@ def HopfcroftKarp():
     #u3    v4
     #...
 
-    #random initialisation
-    for i in range(1,width+1):
-        for j in range(random.randint(3,4)):
-            rawgraph[i][random.randint(1,width)] = 1
-
-    #adding labels around the edge
-    for u in range(width):
-        rawgraph[0][u+1] = u+1
-    for v in range(height):
-        rawgraph[v+1][0] = v+1
-    graph = copy.deepcopy(rawgraph)
-
 
     #bfs to get initial matching
-    for u in range(1,height+1):
-        for v in range(1,width+1):
+    for u in range(0,height):
+        for v in range(0,width):
             if graph[u][v] == 1:
-                M[u-1] = v
-                for p in range(1,width+1):
+                M[u] = v
+                for p in range(0,width):
                     graph[u][p] = 0
-                    graph[p][v] = 0
+                for q in range(0,height):
+                    graph[q][v] = 0
                 break
-
+    print(M)
     #finding free freevertices
     graph = copy.deepcopy(rawgraph)
     freevertices = []
@@ -327,16 +325,16 @@ def HopfcroftKarp():
 
     #converting adjacency matrix into adjacency list
     adjgraph = {}
-    for u in range(1,height+1):
+    for u in range(0,height):
         temp = []
-        for v in range(1,width+1):
+        for v in range(0,width):
             if graph[u][v] == 1:
                 temp.append("v{}".format(v))
         adjgraph["u{}".format(u)] = temp
 
-    for v in range(1,width+1):
+    for v in range(0,width):
         temp = []
-        for u in range(1,height+1):
+        for u in range(0,height):
             if graph[u][v] == 1:
                 temp.append("u{}".format(u))
         adjgraph["v{}".format(v)] = temp
@@ -491,7 +489,6 @@ class TimeblockGUI:
     def addTimeblocks(self):
         periods = self.p.get()
         System.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
-        print(System.getTimeblocks())
 
     def updateTree(self):
         pass
