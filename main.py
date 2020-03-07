@@ -2,6 +2,7 @@ import sqlite3
 import random
 import string
 import copy
+global path
 global currentFrame
 
 
@@ -235,13 +236,8 @@ class System(Basic):
                 if tdata[int(sessions[t][:2])-1][3] == int(classes[c][6:8]):
                     graph[c][t] = 1
 
-        [print(row) for row in graph]
-        HopfcroftKarp(graph)
-
-import random
-import string
-import copy
-global path
+        matchings = HopfcroftKarp(graph)
+        print(matchings)
 
 
 #depth first search.
@@ -271,10 +267,17 @@ def DepthFirstSearch(visited,node,graph,M):
 
     return visited
 
-def HopfcroftKarp(graph):
-    rawgraph = copy.deepcopy(graph)
-
+def HopfcroftKarp(rawgraph):
     height,width = len(rawgraph),len(rawgraph[0])
+    graph = []
+    for u in range(height+1):
+        graph.append([])
+        for v in range(width+1):
+            graph[u].append(0)
+
+    for u in range(height):
+        for v in range(width):
+            graph[u+1][v+1] = rawgraph[u][v]
 
     #1----1
     #2-\  2
@@ -284,7 +287,6 @@ def HopfcroftKarp(graph):
     #1.
     #2  .
     #3    .
-
     M = []
     for i in range(width):
         M.append(0)
@@ -293,21 +295,25 @@ def HopfcroftKarp(graph):
     #u2    v2
     #u3    v4
     #...
-
+    graphcopy = copy.deepcopy(graph)
+    #adding labels around the edge
+    for u in range(width):
+        graph[0][u+1] = u+1
+    for v in range(height):
+        graph[v+1][0] = v+1
 
     #bfs to get initial matching
-    for u in range(0,height):
-        for v in range(0,width):
+    for u in range(1,height+1):
+        for v in range(1,width+1):
             if graph[u][v] == 1:
-                M[u] = v
-                for p in range(0,width):
+                M[u-1] = v
+                for p in range(1,width+1):
                     graph[u][p] = 0
-                for q in range(0,height):
-                    graph[q][v] = 0
+                for p in range(1,height+1):
+                    graph[p][v] = 0
                 break
-    print(M)
+
     #finding free freevertices
-    graph = copy.deepcopy(rawgraph)
     freevertices = []
     for node in range(width):
         freevertices.append(node+1)
@@ -325,16 +331,17 @@ def HopfcroftKarp(graph):
 
     #converting adjacency matrix into adjacency list
     adjgraph = {}
-    for u in range(0,height):
+    graph = copy.deepcopy(graphcopy)
+    for u in range(1,height+1):
         temp = []
-        for v in range(0,width):
+        for v in range(1,width+1):
             if graph[u][v] == 1:
                 temp.append("v{}".format(v))
         adjgraph["u{}".format(u)] = temp
 
-    for v in range(0,width):
+    for v in range(1,width+1):
         temp = []
-        for u in range(0,height):
+        for u in range(1,height+1):
             if graph[u][v] == 1:
                 temp.append("u{}".format(u))
         adjgraph["v{}".format(v)] = temp
@@ -342,10 +349,12 @@ def HopfcroftKarp(graph):
     global path
     visited = []
     path = []
-
+    #depth first search.
+    #for each free vertex we find the augmenting path between two free vertices
     print(freevertices)
     for freevertex in freevertices:
         path = []
+        visited = []
         DepthFirstSearch(visited,freevertex,adjgraph,M)
         path.reverse()
         print(path)
@@ -360,10 +369,11 @@ def HopfcroftKarp(graph):
         else:
             print(freevertex,"has no augmentingpath")
 
-    print(M)
-
-
-
+    matchings = []
+    for x in range(len(M)):
+        if M[x] != 0:
+            matchings.append([x+1,M[x]])
+    return matchings
 
 #GUI front end
 from tkinter import filedialog
