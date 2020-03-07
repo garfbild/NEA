@@ -189,7 +189,7 @@ class System():
             Key=""
             for i in sorted(datum[2:]):
                 Key = Key+System.Two(i)
-                
+
             try:
                 dictionary[Key].append(datum[0])
             except:
@@ -219,11 +219,11 @@ class System():
                     Key = Key + System.Two(day+1)
                     for period in range(ttdata[day][2]):
                         print(System.Two(period))
-        
+
         HopfcroftKarp()
 
 
-        
+
 import random
 import string
 import copy
@@ -265,7 +265,7 @@ def HopfcroftKarp():
         rawgraph.append([])
         for y in range(height+1):
             rawgraph[x].append(0)
-        
+
     #1----1
     #2-\  2
     #3  \-3
@@ -363,9 +363,9 @@ def HopfcroftKarp():
             print(freevertex,"has no augmentingpath")
 
     print(M)
-    
-    
-    
+
+
+
 
 #GUI front end
 from tkinter import filedialog
@@ -426,7 +426,7 @@ class CourseGUI:
         self.t = tk.Entry(self.frame)
         self.t.pack()
         tk.Button(self.frame, text="add course", command = self.addCourse).pack()
-        
+
 
     def addCourse(self):
         System.addCourse(self.e.get(),System.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
@@ -459,7 +459,7 @@ class RoomGUI:
         self.comboBox.pack()
         self.c = tk.Entry(self.frame)
         self.c.pack()
-        
+
         tk.Button(self.frame, text="add room", command = self.addRoom).pack()
 
     def addRoom(self):
@@ -559,8 +559,6 @@ class StudentGUI:
         self.tree.heading('#4', text='CourseThree')
         self.tree.pack()
 
-
-
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root))).pack()
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root))).pack()
@@ -583,7 +581,7 @@ class StudentGUI:
     def addStudents(self):
         System.addStudent(self.n.get(),System.getCourseId(self.CourseBoxOne.get()),System.getCourseId(self.CourseBoxTwo.get()),System.getCourseId(self.CourseBoxThree.get()))
         self.updateTree()
-        
+
     def updateTree(self):
         self.tree.delete(*self.tree.get_children())
         Data = System.getStudents()
