@@ -249,15 +249,25 @@ class System(Basic):
         for matching in matchings:
             dictionarysizeadjusted[str(matching[0])+str(matching[1])] = dictionary[matching[0][0:6]][(int(matching[0][8:10])-1)*maxclasssize:(int(matching[0][8:10]))*maxclasssize]
         timetable = []
+
         for Key in dictionarysizeadjusted:
             rooms = copy.deepcopy(rdata)
             for i in range(len(rooms)):
-                print(rooms)
                 rooms[i] = list(rooms[i])
                 if int(rooms[i][3]) >= len(dictionarysizeadjusted[Key]):
                     timetable.append(Key+System.Two(rooms[i][0]))
                     rooms[i][3] = 999999
-        print(timetable)
+        #first course, second course, third course,course id, nth class, nth session, teacher id ,day, period, room
+        for i in timetable:
+            for student in dictionarysizeadjusted[i[0:18]]:
+                f = open("{}.txt".format(System.Two(student)+sdata[student-1][1])+"Timetable", "a")
+                f.write("Course ID:"+i[6:8])
+                f.write("Course Name:"+cdata[int(i[6:8])-1][1])
+                f.write("Teacher ID:"+i[14:16])
+                f.write("day ID:"+i[16:18])
+                f.write("Period ID:"+i[18:20])
+                f.write("\n")
+
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
