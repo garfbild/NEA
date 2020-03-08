@@ -1,6 +1,0 @@
-ven diagram students based on their lessons
-max class size to create classes and the number of sessions
-teachers and the time blocks they work in
-create u and v bipartite graph
-hopfcroft-karp
-fin
