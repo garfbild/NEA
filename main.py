@@ -239,7 +239,6 @@ class System(Basic):
                     graph[c][t] = 1
 
         matchings = HopfcroftKarp(graph)
-        print(matchings)
         for i in matchings:
             i[0] = classes[i[0]-1]
             i[1] = sessions[i[1]-1]
@@ -251,14 +250,14 @@ class System(Basic):
             dictionarysizeadjusted[str(matching[0])+str(matching[1])] = dictionary[matching[0][0:6]][(int(matching[0][8:10])-1)*maxclasssize:(int(matching[0][8:10]))*maxclasssize]
         timetable = []
         for Key in dictionarysizeadjusted:
-            rooms = list(copy.deepcopy(rdata))
+            rooms = copy.deepcopy(rdata)
             for i in range(len(rooms)):
-                if int(rooms[i][3]) <= len(dictionarysizeadjusted[Key]):
-                    print(rooms[i][3])
+                print(rooms)
+                rooms[i] = list(rooms[i])
+                if int(rooms[i][3]) >= len(dictionarysizeadjusted[Key]):
                     timetable.append(Key+System.Two(rooms[i][0]))
-                    rooms[i][3] = 9999999999
+                    rooms[i][3] = 999999
         print(timetable)
-
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
