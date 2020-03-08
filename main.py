@@ -2,6 +2,7 @@ import sqlite3
 import random
 import string
 import copy
+import os
 global path
 global currentFrame
 
@@ -257,16 +258,24 @@ class System(Basic):
                 if int(rooms[i][3]) >= len(dictionarysizeadjusted[Key]):
                     timetable.append(Key+System.Two(rooms[i][0]))
                     rooms[i][3] = 999999
-        #first course, second course, third course,course id, nth class, nth session, teacher id ,day, period, room
+        #first course2, second course4, third course6,course id8, nth class10, nth session12, teacher id 14,day16, period18, room 20
+        days = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        try:
+            for student in sdata:
+                os.remove("{}.txt".format(System.Two(student[0])+student[1]+"Timetable"))
+        except:
+            pass
+
         for i in timetable:
             for student in dictionarysizeadjusted[i[0:18]]:
-                f = open("{}.txt".format(System.Two(student)+sdata[student-1][1])+"Timetable", "a")
-                f.write("Course ID:"+i[6:8])
-                f.write("Course Name:"+cdata[int(i[6:8])-1][1])
-                f.write("Teacher ID:"+i[14:16])
-                f.write("day ID:"+i[16:18])
-                f.write("Period ID:"+i[18:20])
+                f = open("{}.txt".format(System.Two(student)+sdata[student-1][1]+"Timetable"), "a")
+                f.write(" Course Name:"+cdata[int(i[6:8])-1][1])
+                f.write(" Teacher Name:"+tdata[int(i[12:14])-1][1])
+                f.write(" Day:"+days[int(i[14:16])-1])
+                f.write(" Period:"+i[16:18])
+                f.write(" Room Name:"+rdata[int(i[18:20])-1][1])
                 f.write("\n")
+                f.close()
 
 
 #depth first search.
