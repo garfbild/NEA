@@ -238,7 +238,10 @@ class System(Basic):
 
         matchings = HopfcroftKarp(graph)
         print(matchings)
-
+        for i in matchings:
+            i[0] = classes[i[0]-1]
+            i[1] = sessions[i[1]-1]
+        print(matchings)
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
