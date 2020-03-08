@@ -195,7 +195,6 @@ class System(Basic):
             Key=""
             for i in sorted(datum[2:]):
                 Key = Key+System.Two(i)
-
             try:
                 dictionary[Key].append(datum[0])
             except:
@@ -242,6 +241,8 @@ class System(Basic):
             i[0] = classes[i[0]-1]
             i[1] = sessions[i[1]-1]
         print(matchings)
+        rdata = System.RoomObj.get()
+        print(rdata)
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
