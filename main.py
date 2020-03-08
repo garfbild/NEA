@@ -185,8 +185,8 @@ class System(Basic):
             panic = True
         return bit
     @classmethod
-    def MakeTimetable(self):
-        # first course, second course, third course,course id, nth class
+    def MakeTimetable(self,maxclasssize):
+        # first course, second course, third course,course id, nth class, nth session
         # student classes
         sdata = System.getStudents()
         cdata = System.getCourses()
@@ -202,13 +202,16 @@ class System(Basic):
                 dictionary[Key].append(datum[0])
         classes = []
         for Key in dictionary:
-            classsize = len(dictionary[Key])
+            count = 1
+            while count*maxclasssize < len(dictionary[Key]):
+                count +=1
             for i in range(0,5,2):
-                x = cdata[int(Key[i:i+2])-1]
-                a = System.Two(x[0])
-                b = x[3]
-                for c in range(b):
-                    classes.append(Key+a+System.Two(c+1))
+                courseData = cdata[int(Key[i:i+2])-1]
+                courseID = System.Two(courseData[0])
+                RequiredSessions = courseData[3]
+                for c in range(RequiredSessions):
+                    for n in range(count):
+                        classes.append(Key+courseID+System.Two(n+1)+System.Two(c+1))
         print(classes)
         # teacher id ,day, period
         # teacher time block
@@ -243,6 +246,19 @@ class System(Basic):
         print(matchings)
         rdata = System.RoomObj.get()
         print(rdata)
+        dictionarysizeadjusted = {}
+        for matching in matchings:
+            dictionarysizeadjusted[str(matching[0])+str(matching[1])] = dictionary[matching[0][0:6]][(int(matching[0][8:10])-1)*maxclasssize:(int(matching[0][8:10]))*maxclasssize]
+        timetable = []
+        for Key in dictionarysizeadjusted:
+            rooms = list(copy.deepcopy(rdata))
+            for i in range(len(rooms)):
+                if int(rooms[i][3]) <= len(dictionarysizeadjusted[Key]):
+                    print(rooms[i][3])
+                    timetable.append(Key+System.Two(rooms[i][0]))
+                    rooms[i][3] = 9999999999
+        print(timetable)
+
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
@@ -292,8 +308,9 @@ def HopfcroftKarp(rawgraph):
     #2  .
     #3    .
     M = []
-    for i in range(width):
+    for i in range(height):
         M.append(0)
+    print(M)
     #u    v
     #u1    v3
     #u2    v2
@@ -332,7 +349,7 @@ def HopfcroftKarp(rawgraph):
         else:
             freevertices[i] = "v{}".format(freevertices[i])
             i+=1
-
+    print("freevertices",freevertices)
     #converting adjacency matrix into adjacency list
     adjgraph = {}
     graph = copy.deepcopy(graphcopy)
@@ -400,8 +417,6 @@ class DepartmentGUI:
         tk.Button(self.frame, text="Teachers", command = lambda:newFrame(TeacherGUI(root))).pack()
         tk.Button(self.frame, text="Students", command = lambda:newFrame(StudentGUI(root))).pack()
         tk.Button(self.frame, text="Create Timetable", command = lambda:newFrame(TimetableGUI(root))).pack()
-        tk.Button(self.frame, text="create timetable", command = System.MakeTimetable).pack()
-
 
 
         self.e = tk.Entry(self.frame)
@@ -602,10 +617,16 @@ class StudentGUI:
 class TimetableGUI:
     def __init__(self,root):
         self.frame = tk.Frame(root, width=1280, height=720, background="bisque")
-        tk.Button(self.frame, text="create timetable", command = System.MakeTimetable).pack()
+        self.m = tk.Entry(self.frame)
+        self.m.pack()
+        tk.Button(self.frame, text="create timetable", command = self.buttonCommand).pack()
 
     def updateTree(self):
         pass
+
+    def buttonCommand(self):
+        maxclasssize = int(self.m.get())
+        System.MakeTimetable(maxclasssize)
 
 def newFrame(newFrame):
     global currentFrame
