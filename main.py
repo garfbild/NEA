@@ -187,24 +187,23 @@ class System(Basic):
         return bit
     @classmethod
     def MakeTimetable(self,maxclasssize):
-        # first course, second course, third course,course id, nth class, nth session
-        # student classes
         sdata = System.getStudents()
         cdata = System.getCourses()
-        dictionary = {}
+        Dict = {}
         for datum in sdata:
             Key=""
             for i in sorted(datum[2:]):
                 Key = Key+System.Two(i)
             try:
-                dictionary[Key].append(datum[0])
+                Dict[Key].append(datum[0])
             except:
-                dictionary[Key] = []
-                dictionary[Key].append(datum[0])
-        classes = []
-        for Key in dictionary:
+                Dict[Key] = []
+                Dict[Key].append(datum[0])
+        #Course1, Course2, Course3, Course, nth class, nth session
+        classDict = {}
+        for Key in Dict:
             count = 1
-            while count*maxclasssize < len(dictionary[Key]):
+            while count*maxclasssize < len(Dict[Key]):
                 count +=1
             for i in range(0,5,2):
                 courseData = cdata[int(Key[i:i+2])-1]
@@ -212,71 +211,47 @@ class System(Basic):
                 RequiredSessions = courseData[3]
                 for c in range(RequiredSessions):
                     for n in range(count):
-                        classes.append(Key+courseID+System.Two(n+1)+System.Two(c+1))
-        print(classes)
-        # teacher id ,day, period
-        # teacher time block
-        sessions = []
+                        tempKey = Key+courseID+System.Two(n+1)+System.Two(c+1)
+                        classDict[tempKey] = Dict[Key][n*maxclasssize:(n+1)*maxclasssize]
         tdata = System.getTeachers()
         ttdata = System.getTimeblocks()
-        for teacher in tdata:
+        sessions = []
+        #teacherID nth session
+        for datum in tdata:
             Key = ""
-            Key = Key+System.Two(teacher[0])
+            Key = Key+System.Two(datum[0])
+            count = 0
             for day in range(5):
-                if teacher[4:][day] == 1:
+                if datum[4:][day] == 1:
                     for period in range(ttdata[day][2]):
-                        sessions.append(Key+System.Two(day+1)+System.Two(period+1))
-        print(sessions)
+                        count+=1
+                        sessions.append(Key+System.Two(count))
+
+        U = copy.deepcopy(list(classDict.keys()))
+        V = copy.deepcopy(sessions)
+        random.shuffle(U)
+        random.shuffle(V)
         graph = []
-        for x in range(len(classes)):
+        for u in range(len(U)):
             graph.append([])
-            for y in range(len(sessions)):
-                graph[x].append(0)
-
-        for c in range(len(classes)):
-            for t in range(len(sessions)):
-                # if techer course == class course
-                if tdata[int(sessions[t][:2])-1][3] == int(classes[c][6:8]):
-                    graph[c][t] = 1
-
+            for v in range(len(V)):
+                if tdata[int(V[v][:2])-1][3] == int(U[u][6:8]):
+                    graph[u].append(1)
+                else:
+                    graph[u].append(0)
+        
         matchings = HopfcroftKarp(graph)
-        for i in matchings:
-            i[0] = classes[i[0]-1]
-            i[1] = sessions[i[1]-1]
         print(matchings)
-        rdata = System.RoomObj.get()
-        print(rdata)
-        dictionarysizeadjusted = {}
-        for matching in matchings:
-            dictionarysizeadjusted[str(matching[0])+str(matching[1])] = dictionary[matching[0][0:6]][(int(matching[0][8:10])-1)*maxclasssize:(int(matching[0][8:10]))*maxclasssize]
-        timetable = []
+        for i in matchings:
+            print("Students",classDict[U[i[0]-1]]," have ",cdata[int(U[i[0]-1][6:8])-1][1]," with ",tdata[int(V[i[1]-1][:2])-1][1])
+            
 
-        for Key in dictionarysizeadjusted:
-            rooms = copy.deepcopy(rdata)
-            for i in range(len(rooms)):
-                rooms[i] = list(rooms[i])
-                if int(rooms[i][3]) >= len(dictionarysizeadjusted[Key]):
-                    timetable.append(Key+System.Two(rooms[i][0]))
-                    rooms[i][3] = 999999
-        #first course2, second course4, third course6,course id8, nth class10, nth session12, teacher id 14,day16, period18, room 20
-        days = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
-        try:
-            for student in sdata:
-                os.remove("{}.txt".format(System.Two(student[0])+student[1]+"Timetable"))
-        except:
-            pass
+                        
+                
+            
+                
 
-        for i in timetable:
-            for student in dictionarysizeadjusted[i[0:18]]:
-                f = open("{}.txt".format(System.Two(student)+sdata[student-1][1]+"Timetable"), "a")
-                f.write(" Course Name:"+cdata[int(i[6:8])-1][1])
-                f.write(" Teacher Name:"+tdata[int(i[12:14])-1][1])
-                f.write(" Day:"+days[int(i[14:16])-1])
-                f.write(" Period:"+i[16:18])
-                f.write(" Room Name:"+rdata[int(i[18:20])-1][1])
-                f.write("\n")
-                f.close()
-
+        
 
 #depth first search.
 def DepthFirstSearch(visited,node,graph,M):
@@ -328,7 +303,6 @@ def HopfcroftKarp(rawgraph):
     M = []
     for i in range(height):
         M.append(0)
-    print(M)
     #u    v
     #u1    v3
     #u2    v2
@@ -367,7 +341,6 @@ def HopfcroftKarp(rawgraph):
         else:
             freevertices[i] = "v{}".format(freevertices[i])
             i+=1
-    print("freevertices",freevertices)
     #converting adjacency matrix into adjacency list
     adjgraph = {}
     graph = copy.deepcopy(graphcopy)
@@ -390,13 +363,11 @@ def HopfcroftKarp(rawgraph):
     path = []
     #depth first search.
     #for each free vertex we find the augmenting path between two free vertices
-    print(freevertices)
     for freevertex in freevertices:
         path = []
         visited = []
         DepthFirstSearch(visited,freevertex,adjgraph,M)
         path.reverse()
-        print(path)
         if path != []:
             if M[int(path[-1][1:])-1] == 0:
                 #symmetric difference of a path and matching
@@ -404,9 +375,9 @@ def HopfcroftKarp(rawgraph):
                     if path[x][0] == "u":
                         M[int(path[x][1:])-1] = int(path[x-1][1:])
             else:
-                print(freevertex,"has no augmentingpath")
+                pass
         else:
-            print(freevertex,"has no augmentingpath")
+            pass
 
     matchings = []
     for x in range(len(M)):
@@ -666,7 +637,6 @@ if __name__ == "__main__":
     root.geometry("1280x720")
     currentFrame = tk.Frame(root, width=1280, height=720, background="bisque")
     currentFrame.pack(fill=None, expand=False)
-    root.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("database files","*.db"),("all files","*.*")))
     newFrame(DepartmentGUI(root))
     while True:
         root.update_idletasks()
