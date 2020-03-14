@@ -15,6 +15,9 @@ class Basic():
     def get(self):
         self.c.execute('''SELECT * FROM {}Table'''.format(self.objType))
         return self.c.fetchall()
+    def getById(self,Id):
+        self.c.execute('''SELECT * FROM {}Table WHERE {}Id = {}'''.format(self.objType,self.objType,Id))
+        return self.c.fetchall()[0]
     def getNewID(self):
         self.c.execute('''SELECT {}Id FROM {}Table ORDER BY {}Id DESC;'''.format(self.objType,self.objType,self.objType))
         IDS = self.c.fetchall()
@@ -30,6 +33,9 @@ class Basic():
         for x in range(len(data)):
             if data[x][1] == name:
                 return data[x][0]
+    def deleteID(self,Id):
+        self.c.execute('''DELETE FROM {}Table WHERE {}Id = {}'''.format(self.objType,self.objType,Id))
+        self.conn.commit()
 
 class Timeblocks(Basic):
     #time blocks is unique because no new feilds are enterd but instead we only edit the number of periods on each day
@@ -59,7 +65,7 @@ class Departments(Basic):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?)'''.format(self.objType),(newID,name))
         self.conn.commit()
-    
+
 
 class Courses(Basic):
     #ID name DepartmentId
@@ -74,7 +80,7 @@ class Courses(Basic):
         newID = self.getNewID()
         self.c.execute('''INSERT INTO {}Table VALUES (?,?,?,?)'''.format(self.objType),(newID,name,DepartmentId,time))
         self.conn.commit()
-    
+
 class Rooms(Basic):
     #ID name DepartmentId Capacity
     def __init__(self,filename):
@@ -179,6 +185,28 @@ class System:
         self.StudentObj.add(name,CourseOne,CourseTwo,CourseThree)
     def addTImetable(self,name,student,course,teacher):
         self.TimetableObj.add(name,student,course,teacher)
+    def removeDepartment(self,Id):
+        return self.DepartmentObj.deleteID(Id)
+    def removeCourse(self,Id):
+        return self.CourseObj.deleteID(Id)
+    def removeRoom(self,Id):
+        return self.RoomObj.deleteID(Id)
+    def removeTeacher(self,Id):
+        return self.TeacherObj.deleteID(Id)
+    def removeStudent(self,Id):
+        return self.StudentObj.deleteID(Id)
+    def getDepartment(self,Id):
+        return self.DepartmentObj.getById(Id)
+    def getCourse(self,Id):
+        return self.CourseObj.getById(Id)
+    def getRoom(self,Id):
+        return self.RoomObj.getById(Id)
+    def getTeacher(self,Id):
+        return self.TeacherObj.getById(Id)
+    def getStudent(self,Id):
+        return self.StudentObj.getById(Id)
+    def getTimeblock(self,Id):
+        return self.TimeblockObj.getById(Id)
 
     def MakeTimetable(self,maxclasssize):
         sdata = self.getStudents()
@@ -200,10 +228,9 @@ class System:
             while count*maxclasssize < len(Dict[Key]):
                 count +=1
             for i in range(0,5,2):
-                print(int(Key[i:i+2])-1,Key)
-                courseData = cdata[int(Key[i:i+2])-1]
-                courseID = Two(courseData[0])
-                RequiredSessions = courseData[3]
+                courseDatum = self.getCourse(int(Key[i:i+2]))
+                courseID = Two(courseDatum[0])
+                RequiredSessions = courseDatum[3]
                 for c in range(RequiredSessions):
                     for n in range(count):
                         tempKey = Key+courseID+Two(n+1)+Two(c+1)
@@ -214,6 +241,7 @@ class System:
         #teacherID nth session
         for datum in tdata:
             Key = ""
+            print("teacher",datum)
             Key = Key+Two(datum[0])
             count = 0
             for day in range(5):
@@ -227,10 +255,12 @@ class System:
         random.shuffle(U)
         random.shuffle(V)
         graph = []
+        print(V)
         for u in range(len(U)):
             graph.append([])
             for v in range(len(V)):
-                if tdata[int(V[v][:2])-1][3] == int(U[u][6:8]):
+                print(self.getTeacher(int(V[v][:2])))
+                if self.getTeacher(int(V[v][:2]))[3] == int(U[u][6:8]):
                     graph[u].append(1)
                 else:
                     graph[u].append(0)
@@ -238,7 +268,7 @@ class System:
         matchings = HopfcroftKarp(graph)
         print(matchings)
         for i in matchings:
-            print("Students",classDict[U[i[0]-1]]," have ",cdata[int(U[i[0]-1][6:8])-1][1]," with ",tdata[int(V[i[1]-1][:2])-1][1])
+            print("Students",classDict[U[i[0]-1]]," have ",self.getCourse(int(U[i[0]-1][6:8]))[1]," with ",self.getTeacher(int(V[i[1]-1][:2]))[1])
             for student in classDict[U[i[0]-1]]:
                 self.addTImetable(U[i[0]-1]+V[i[1]-1],student,int(U[i[0]-1][6:8]),int(V[i[1]-1][:2]))
 
@@ -414,9 +444,16 @@ class DepartmentGUI(BasicGUI):
         self.e = tk.Entry(self.frame)
         self.e.pack()
         tk.Button(self.frame, text="add department", command = self.addDepartment).pack()
+        self.i = tk.Entry(self.frame)
+        self.i.pack()
+        tk.Button(self.frame, text="remove department", command = self.removeDepartment).pack()
 
     def addDepartment(self):
         self.system.addDepartment(self.e.get())
+        self.updateTree()
+
+    def removeDepartment(self):
+        self.system.removeDepartment(self.i.get())
         self.updateTree()
 
     def updateTree(self):
@@ -446,9 +483,17 @@ class CourseGUI:
         self.t.pack()
         tk.Button(self.frame, text="add course", command = self.addCourse).pack()
 
+        self.i = tk.Entry(self.frame)
+        self.i.pack()
+        tk.Button(self.frame, text="remove course", command = self.removeCourse).pack()
+
 
     def addCourse(self):
         self.system.addCourse(self.e.get(),self.system.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
+        self.updateTree()
+
+    def removeCourse(self):
+        self.system.removeCourse(self.i.get())
         self.updateTree()
 
     def updateTree(self):
@@ -479,8 +524,16 @@ class RoomGUI:
 
         tk.Button(self.frame, text="add room", command = self.addRoom).pack()
 
+        self.i = tk.Entry(self.frame)
+        self.i.pack()
+        tk.Button(self.frame, text="remove room", command = self.removeRoom).pack()
+
     def addRoom(self):
         self.system.addRoom(self.n.get(),self.system.getDepartmentId(self.comboBox.get()),self.c.get())
+        self.updateTree()
+
+    def removeRoom(self):
+        self.system.removeRoom(self.i.get())
         self.updateTree()
 
     def updateTree(self):
@@ -553,8 +606,16 @@ class TeacherGUI:
 
         tk.Button(self.frame, text="add teacher", command = self.addTeacher).pack()
 
+        self.i = tk.Entry(self.frame)
+        self.i.pack()
+        tk.Button(self.frame, text="remove teacher", command = self.removeTeacher).pack()
+
     def addTeacher(self):
         self.system.addTeacher(self.n.get(),self.system.getDepartmentId(self.DepartmentBox.get()),self.system.getCourseId(self.CourseBox.get()),self.Monday.get(),self.Tuesday.get(),self.Wednesday.get(),self.Thursday.get(),self.Friday.get())
+        self.updateTree()
+
+    def removeTeacher(self):
+        self.system.removeTeacher(self.i.get())
         self.updateTree()
 
     def updateTree(self):
@@ -591,8 +652,16 @@ class StudentGUI:
 
         tk.Button(self.frame, text="add student", command = self.addStudents).pack()
 
+        self.i = tk.Entry(self.frame)
+        self.i.pack()
+        tk.Button(self.frame, text="remove student", command = self.removeStudent).pack()
+
     def addStudents(self):
         self.system.addStudent(self.n.get(),self.system.getCourseId(self.CourseBoxOne.get()),self.system.getCourseId(self.CourseBoxTwo.get()),self.system.getCourseId(self.CourseBoxThree.get()))
+        self.updateTree()
+
+    def removeStudent(self):
+        self.system.removeStudent(self.i.get())
         self.updateTree()
 
     def updateTree(self):
@@ -639,7 +708,7 @@ if __name__ == "__main__":
     currentFrame = tk.Frame(root, width=1280, height=720)
     currentFrame.pack(fill=None, expand=False)
     root.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("database files","*.db"),("all files","*.*")))
-    system = System(root.filename)
+    system = System("data.db")
     newFrame(DepartmentGUI(root,system))
     while True:
         root.update_idletasks()
