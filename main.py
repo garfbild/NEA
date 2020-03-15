@@ -46,6 +46,11 @@ class Timeblocks(Basic):
         if self.c.fetchall()[1][1] == "TimeblockName":
             self.c.execute('''DROP TABLE TimeblockTable''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
+        try:
+            for i in range(5):
+                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,self.days[i],0))
+        except:
+            pass
 
     def add(self,dayID,day,periods):
         try:
@@ -241,7 +246,6 @@ class System:
         #teacherID nth session
         for datum in tdata:
             Key = ""
-            print("teacher",datum)
             Key = Key+Two(datum[0])
             count = 0
             for day in range(5):
@@ -255,18 +259,15 @@ class System:
         random.shuffle(U)
         random.shuffle(V)
         graph = []
-        print(V)
         for u in range(len(U)):
             graph.append([])
             for v in range(len(V)):
-                print(self.getTeacher(int(V[v][:2])))
                 if self.getTeacher(int(V[v][:2]))[3] == int(U[u][6:8]):
                     graph[u].append(1)
                 else:
                     graph[u].append(0)
 
         matchings = HopfcroftKarp(graph)
-        print(matchings)
         for i in matchings:
             print("Students",classDict[U[i[0]-1]]," have ",self.getCourse(int(U[i[0]-1][6:8]))[1]," with ",self.getTeacher(int(V[i[1]-1][:2]))[1])
             for student in classDict[U[i[0]-1]]:
@@ -489,8 +490,12 @@ class CourseGUI:
 
 
     def addCourse(self):
-        self.system.addCourse(self.e.get(),self.system.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
-        self.updateTree()
+        try:
+            self.system.addCourse(self.e.get(),self.system.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
+            self.updateTree()
+        except:
+            print("ERROR: ",self.t.get(),"is not a valid amount of time. Make sure your using an integer")
+
 
     def removeCourse(self):
         self.system.removeCourse(self.i.get())
@@ -529,8 +534,12 @@ class RoomGUI:
         tk.Button(self.frame, text="remove room", command = self.removeRoom).pack()
 
     def addRoom(self):
-        self.system.addRoom(self.n.get(),self.system.getDepartmentId(self.comboBox.get()),self.c.get())
-        self.updateTree()
+        try:
+            self.system.addRoom(self.n.get(),self.system.getDepartmentId(self.comboBox.get()),int(self.c.get()))
+            self.updateTree()
+        except:
+            print("ERROR: ",self.c.get(),"is not a valid amount of time. Make sure your using an integer")
+
 
     def removeRoom(self):
         self.system.removeRoom(self.i.get())
@@ -559,8 +568,10 @@ class TimeblockGUI:
         tk.Button(self.frame, text="save", command = self.addTimeblocks).pack()
 
     def addTimeblocks(self):
-        periods = self.p.get()
-        self.system.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),periods)
+        try:
+            self.system.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),int(self.p.get()))
+        except:
+            print("ERROR: ",self.p.get(),"is not a valid number of periods. Make sure your using an integer")
 
     def updateTree(self):
         pass
@@ -657,8 +668,11 @@ class StudentGUI:
         tk.Button(self.frame, text="remove student", command = self.removeStudent).pack()
 
     def addStudents(self):
-        self.system.addStudent(self.n.get(),self.system.getCourseId(self.CourseBoxOne.get()),self.system.getCourseId(self.CourseBoxTwo.get()),self.system.getCourseId(self.CourseBoxThree.get()))
-        self.updateTree()
+        if self.CourseBoxOne.get() != self.CourseBoxTwo.get() and self.CourseBoxOne.get() != self.CourseBoxThree.get() and self.CourseBoxTwo.get() != self.CourseBoxThree.get() and self.CourseBoxOne.get() != "" and self.CourseBoxTwo.get() != "" and self.CourseBoxThree.get() != "" and self.n.get() != "":
+            self.system.addStudent(self.n.get(),self.system.getCourseId(self.CourseBoxOne.get()),self.system.getCourseId(self.CourseBoxTwo.get()),self.system.getCourseId(self.CourseBoxThree.get()))
+            self.updateTree()
+        else:
+            print("ERROR: please select three unique courses")
 
     def removeStudent(self):
         self.system.removeStudent(self.i.get())
@@ -708,7 +722,7 @@ if __name__ == "__main__":
     currentFrame = tk.Frame(root, width=1280, height=720)
     currentFrame.pack(fill=None, expand=False)
     root.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("database files","*.db"),("all files","*.*")))
-    system = System("data.db")
+    system = System(root.filename)
     newFrame(DepartmentGUI(root,system))
     while True:
         root.update_idletasks()
