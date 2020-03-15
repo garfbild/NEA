@@ -305,8 +305,6 @@ def DepthFirstSearch(visited,node,graph,M):
     if visited != []:
         if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
             path.append(node)
-            return visited
-
     return visited
 
 def HopfcroftKarp(rawgraph):
