@@ -46,11 +46,7 @@ class Timeblocks(Basic):
         if self.c.fetchall()[1][1] == "TimeblockName":
             self.c.execute('''DROP TABLE TimeblockTable''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS TimeblockTable(TimeblockId INTEGER PRIMARY KEY, Day TEXT, Periods INTEGER)''')
-        try:
-            for i in range(5):
-                self.c.execute('''INSERT INTO {}Table VALUES (?,?,?)'''.format(self.objType),(i+1,self.days[i],0))
-        except:
-            pass
+
 
     def add(self,dayID,day,periods):
         try:
@@ -258,6 +254,8 @@ class System:
         V = copy.deepcopy(sessions)
         random.shuffle(U)
         random.shuffle(V)
+        if len(U) > len(V):
+            print("insufficent timeslots to accomodate lessons. consider adding more teachers or increasing the maximum class size")
         graph = []
         for u in range(len(U)):
             graph.append([])
@@ -448,8 +446,9 @@ class DepartmentGUI(BasicGUI):
         tk.Button(self.frame, text="remove department", command = self.removeDepartment).pack()
 
     def addDepartment(self):
-        self.system.addDepartment(self.e.get())
-        self.updateTree()
+        if self.e.get != "":
+            self.system.addDepartment(self.e.get())
+            self.updateTree()
 
     def removeDepartment(self):
         self.system.removeDepartment(self.i.get())
@@ -461,7 +460,7 @@ class DepartmentGUI(BasicGUI):
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],))
 
-class CourseGUI:
+class CourseGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
         self.tree = ttk.Treeview(self.frame,columns=('Name','Department','TimeRequirement'))
@@ -505,7 +504,7 @@ class CourseGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
 
-class RoomGUI:
+class RoomGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
         self.tree = ttk.Treeview(self.frame,columns=('Name','Department','Capacity'))
@@ -549,7 +548,7 @@ class RoomGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3]))
 
-class TimeblockGUI:
+class TimeblockGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
 
@@ -574,7 +573,7 @@ class TimeblockGUI:
     def updateTree(self):
         pass
 
-class TeacherGUI:
+class TeacherGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
         self.tree = ttk.Treeview(self.frame,columns=('Name','Department','Course','TeachesMonday','TeachesTuesday','TeachesWednesday','TeachesThursday','TeachesFriday'))
@@ -633,7 +632,7 @@ class TeacherGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4],Data[i][5],Data[i][6],Data[i][7],Data[i][8]))
 
-class StudentGUI:
+class StudentGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
         self.tree = ttk.Treeview(self.frame,columns=('Name','CourseOne','CourseTwo','CourseThree'))
@@ -682,7 +681,7 @@ class StudentGUI:
         for i in range(len(Data)-1,-1,-1):
             self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2],Data[i][3],Data[i][4]))
 
-class TimetableGUI:
+class TimetableGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
 
@@ -696,8 +695,17 @@ class TimetableGUI:
         pass
 
     def buttonCommand(self):
-        maxclasssize = int(self.m.get())
-        self.system.MakeTimetable(maxclasssize)
+        try:
+            maxclasssize = int(self.m.get())
+            if maxclasssize > 0:
+                self.system.MakeTimetable(maxclasssize)
+            else:
+                print("ERROR intger max class size")
+        except:
+            print("ERROR intger max class size")
+            pass
+
+
 
 def newFrame(newFrame):
     global currentFrame
