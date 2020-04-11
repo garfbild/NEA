@@ -1,8 +1,6 @@
 import sqlite3
 import random
 import copy
-global path
-global currentFrame
 
 
 class Basic():
@@ -213,6 +211,7 @@ class System:
         sdata = self.getStudents()
         cdata = self.getCourses()
         Dict = {}
+        #for each combination of subjects students have chosen
         for datum in sdata:
             Key=""
             for i in sorted(datum[2:]):
@@ -223,6 +222,7 @@ class System:
                 Dict[Key] = []
                 Dict[Key].append(datum[0])
         #Course1, Course2, Course3, Course, nth class, nth session
+        #creating classes which obey the max class size constraint
         classDict = {}
         for Key in Dict:
             count = 1
@@ -281,29 +281,28 @@ def Two(x):
     return bit
 
 #depth first search.
-def DepthFirstSearch(visited,node,graph,M):
+def DepthFirstSearch(visited,node,graph,M,path):
     #we pass the path as we back up through the recursion
-    global path
     if visited != []:
         if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
             path.append(node)
-            return visited
+            return visited,path
     if node not in visited:
         visited.append(node)
         for n in graph[node]:
             if visited != []:
                 if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
                     path.append(node)
-                    return visited
+                    return visited,path
             if node[0] == "u":
                 if int(n[1:]) == M[int(node[1])-1]:
-                    visited = DepthFirstSearch(visited,n,graph,M)
+                    visited,path = DepthFirstSearch(visited,n,graph,M,path)
             else:
-                visited = DepthFirstSearch(visited,n,graph,M)
+                visited,path = DepthFirstSearch(visited,n,graph,M,path)
     if visited != []:
         if visited[-1][0] == "u" and M[int(visited[-1][1:])-1] == 0:
             path.append(node)
-    return visited
+    return visited,path
 
 def HopfcroftKarp(rawgraph):
     height,width = len(rawgraph),len(rawgraph[0])
@@ -383,7 +382,6 @@ def HopfcroftKarp(rawgraph):
                 temp.append("u{}".format(u))
         adjgraph["v{}".format(v)] = temp
 
-    global path
     visited = []
     path = []
     #depth first search.
@@ -391,7 +389,7 @@ def HopfcroftKarp(rawgraph):
     for freevertex in freevertices:
         path = []
         visited = []
-        DepthFirstSearch(visited,freevertex,adjgraph,M)
+        visited,path = DepthFirstSearch(visited,freevertex,adjgraph,M,path)
         path.reverse()
         if path != []:
             if M[int(path[-1][1:])-1] == 0:
@@ -417,8 +415,9 @@ import tkinter.ttk as ttk
 
 global currentFrame
 class BasicGUI:
-    def __init__(self,system):
+    def __init__(self,system,root):
         self.system = system
+        self.root = root
         tk.Button(self.frame, text="Departments", command = lambda:newFrame(DepartmentGUI(root,self.system))).pack()
         tk.Button(self.frame, text="Courses", command = lambda:newFrame(CourseGUI(root,self.system))).pack()
         tk.Button(self.frame, text="Rooms", command = lambda:newFrame(RoomGUI(root,self.system))).pack()
@@ -436,7 +435,7 @@ class DepartmentGUI(BasicGUI):
         self.tree.heading('#1', text='Name')
         self.tree.pack()
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.e = tk.Entry(self.frame)
         self.e.pack()
@@ -470,7 +469,7 @@ class CourseGUI(BasicGUI):
         self.tree.heading('#3', text='TimeRequirement')
         self.tree.pack()
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.e = tk.Entry(self.frame)
         self.e.pack()
@@ -514,7 +513,7 @@ class RoomGUI(BasicGUI):
         self.tree.heading('#3', text='Capacity')
 
         self.tree.pack()
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.n = tk.Entry(self.frame)
         self.n.pack()
@@ -552,7 +551,7 @@ class TimeblockGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.dict = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5}
 
@@ -588,7 +587,7 @@ class TeacherGUI(BasicGUI):
         self.tree.heading('#8', text='TeachesFriday')
         self.tree.pack()
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.n = tk.Entry(self.frame)
         self.n.pack()
@@ -643,7 +642,7 @@ class StudentGUI(BasicGUI):
         self.tree.heading('#4', text='CourseThree')
         self.tree.pack()
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.n = tk.Entry(self.frame)
         self.n.pack()
@@ -685,7 +684,7 @@ class TimetableGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
 
-        BasicGUI.__init__(self,system)
+        BasicGUI.__init__(self,system,root)
 
         self.m = tk.Entry(self.frame)
         self.m.pack()
@@ -695,27 +694,27 @@ class TimetableGUI(BasicGUI):
         pass
 
     def buttonCommand(self):
+        maxclasssize = int(self.m.get())
+        if maxclasssize > 0:
+            self.system.MakeTimetable(maxclasssize)
+        else:
+            print("ERROR intger max class size 1")
         try:
             maxclasssize = int(self.m.get())
             if maxclasssize > 0:
                 self.system.MakeTimetable(maxclasssize)
             else:
-                print("ERROR intger max class size")
+                print("ERROR intger max class size 1")
         except:
-            print("ERROR intger max class size")
+            print("ERROR intger max class size 2")
             pass
 
-
-
 def newFrame(newFrame):
-    global currentFrame
+    for frame in newFrame.root.winfo_children():
+        frame.forget()
     if isinstance(newFrame,tk.Frame) == True:
-        currentFrame.pack_forget()
-        currentFrame = newFrame
         newFrame.pack()
     else:
-        currentFrame.pack_forget()
-        currentFrame = newFrame.frame
         newFrame.frame.pack()
         try:
             newFrame.updateTree()
@@ -725,8 +724,7 @@ def newFrame(newFrame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.geometry("1280x720")
-    currentFrame = tk.Frame(root, width=1280, height=720)
-    currentFrame.pack(fill=None, expand=False)
+    tk.Frame(root, width=1280, height=720).pack(fill=None, expand=False)
     root.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("database files","*.db"),("all files","*.*")))
     system = System(root.filename)
     newFrame(DepartmentGUI(root,system))
