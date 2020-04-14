@@ -550,6 +550,11 @@ class RoomGUI(BasicGUI):
 class TimeblockGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
+        self.tree = ttk.Treeview(self.frame,columns=('Day','Periods'))
+        self.tree.heading('#0', text='Id')
+        self.tree.heading('#1', text='Day')
+        self.tree.heading('#2', text='Periods')
+        self.tree.pack()
 
         BasicGUI.__init__(self,system,root)
 
@@ -570,7 +575,12 @@ class TimeblockGUI(BasicGUI):
             print("ERROR: ",self.p.get(),"is not a valid number of periods. Make sure your using an integer")
 
     def updateTree(self):
-        pass
+        print(self.tree.get_children())
+        print(*self.tree.get_children())
+        self.tree.delete(*self.tree.get_children())
+        Data = self.system.getTimeblocks()
+        for i in range(len(Data)-1,-1,-1):
+            self.tree.insert('',self.tree.size()[0],text = Data[i][0], values = (Data[i][1],Data[i][2]))
 
 class TeacherGUI(BasicGUI):
     def __init__(self,root,system):
