@@ -462,22 +462,24 @@ class DepartmentGUI(BasicGUI):
 class CourseGUI(BasicGUI):
     def __init__(self,root,system):
         self.frame = tk.Frame(root, width=1280, height=720)
-        self.tree = ttk.Treeview(self.frame,columns=('Name','Department','TimeRequirement'))
+        self.tree = ttk.Treeview(self.frame,columns=('Name','TimeRequirement','Department'))
         self.tree.heading('#0', text='Id')
         self.tree.heading('#1', text='Name')
-        self.tree.heading('#2', text='Department')
-        self.tree.heading('#3', text='TimeRequirement')
+        self.tree.heading('#2', text='TimeRequirement')
+        self.tree.heading('#3', text='Department')
+
         self.tree.pack()
 
         BasicGUI.__init__(self,system,root)
 
         self.e = tk.Entry(self.frame)
         self.e.pack()
+        self.t = tk.Entry(self.frame)
+        self.t.pack()
         self.comboBox = ttk.Combobox(self.frame,
                             values=[data[1] for data in self.system.getDepartments()])
         self.comboBox.pack()
-        self.t = tk.Entry(self.frame)
-        self.t.pack()
+
         tk.Button(self.frame, text="add course", command = self.addCourse).pack()
 
         self.i = tk.Entry(self.frame)
@@ -487,7 +489,7 @@ class CourseGUI(BasicGUI):
 
     def addCourse(self):
         try:
-            self.system.addCourse(self.e.get(),self.system.DepartmentObj.getId(self.comboBox.get()),int(self.t.get()))
+            self.system.addCourse(self.e.get(),int(self.t.get()),self.system.DepartmentObj.getId(self.comboBox.get()))
             self.updateTree()
         except:
             print("ERROR: ",self.t.get(),"is not a valid amount of time. Make sure your using an integer")
@@ -571,12 +573,11 @@ class TimeblockGUI(BasicGUI):
     def addTimeblocks(self):
         try:
             self.system.addTimeblock(self.dict[self.comboBox.get()],self.comboBox.get(),int(self.p.get()))
+            self.updateTree()
         except:
             print("ERROR: ",self.p.get(),"is not a valid number of periods. Make sure your using an integer")
 
     def updateTree(self):
-        print(self.tree.get_children())
-        print(*self.tree.get_children())
         self.tree.delete(*self.tree.get_children())
         Data = self.system.getTimeblocks()
         for i in range(len(Data)-1,-1,-1):
