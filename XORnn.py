@@ -70,7 +70,7 @@ for k in range(100000):
             for i in range(HiddenNum):
                 Sum += a2[i]*HiddenWeights[i][j]
             a3[j] = g(Sum)
-        
+
         #back propagte the gradients
         for i in range(OutputNum):
             error =  y_data[m] - a3[i]
@@ -109,7 +109,7 @@ for k in range(100000):
                     Sum += a2[i]*HiddenWeights[i][j]
                 a3[j] = g(Sum)
             error+= y_data[m]*math.log(a3[0]) + (1-y_data[m])* math.log(1-a3[0])
-            
+
 
         print(error)
 for i in range(4):
